@@ -78,6 +78,17 @@ async function run() {
                 console.log(JSON.stringify(pullRes, null, 2));
                 break;
 
+            case 'update-site':
+                // Usage: athena-agent update-site <projectName> --instruction "Zet de titel op ..."
+                if (args[1] === '--instruction') {
+                    const instruction = args.slice(2).join(' ');
+                    const result = await siteCtrl.updateFromInstruction(args[0], instruction);
+                    console.log(JSON.stringify(result, null, 2));
+                } else {
+                    console.log("Usage: node athena-agent.js update-site <projectName> --instruction \"...\"");
+                }
+                break;
+
             case 'deploy':
                 const deployRes = await siteCtrl.deploy(args[0], args[1] || "Update via Agent");
                 console.log(JSON.stringify(deployRes, null, 2));

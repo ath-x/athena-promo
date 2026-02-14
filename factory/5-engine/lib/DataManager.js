@@ -259,6 +259,39 @@ export class AthenaDataManager {
     }
 
     /**
+     * Patch a specific key in a JSON data file
+     */
+    patchData(projectName, file, index, key, value) {
+        const paths = this.resolvePaths(projectName);
+        const fileName = file.endsWith('.json') ? file : `${file}.json`;
+        const filePath = path.join(paths.dataDir, fileName);
+
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`Bestand ${fileName} niet gevonden in project ${projectName}`);
+        }
+
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+        if (Array.isArray(data)) {
+            if (!data[index]) data[index] = {};
+            data[index][key] = value;
+        } else {
+            // Voor site_settings.json of andere object-gebaseerde configs
+            const keys = key.split('.');
+            let obj = data;
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!obj[keys[i]]) obj[keys[i]] = {};
+                obj = obj[keys[i]];
+            }
+            obj[keys[keys.length - 1]] = value;
+        }
+
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        console.log(`✅ Patched ${file} -> ${key}: ${value}`);
+        return true;
+    }
+
+    /**
      * Sync local JSON data back to Google Sheet
      */
     async syncToSheet(projectName) {

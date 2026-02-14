@@ -9,6 +9,7 @@ import { execSync } from 'child_process';
 import { createProject, validateProjectName } from '../factory.js';
 import { deployProject } from '../deploy-wizard.js';
 import { AthenaDataManager } from '../lib/DataManager.js';
+import { AthenaInterpreter } from '../lib/Interpreter.js';
 
 export class SiteController {
     constructor(config) {
@@ -16,6 +17,45 @@ export class SiteController {
         this.root = config.paths.root;
         this.sitesDir = config.paths.sites;
         this.dataManager = new AthenaDataManager(config.paths.factory);
+        this.interpreter = new AthenaInterpreter(config);
+    }
+
+    /**
+     * Update a site based on a natural language instruction
+     */
+    async updateFromInstruction(projectName, instruction) {
+        // 1. Haal de huidige data op voor context (beperkt voor AI token limits)
+        const paths = this.dataManager.resolvePaths(projectName);
+        const basisData = this.dataManager.loadJSON(path.join(paths.dataDir, 'basis.json')) || [];
+        const settings = this.dataManager.loadJSON(path.join(paths.dataDir, 'site_settings.json')) || {};
+        
+        const context = {
+            availableFiles: fs.readdirSync(paths.dataDir).filter(f => f.endsWith('.json')),
+            basisSample: basisData[0],
+            settingsSample: Array.isArray(settings) ? settings[0] : settings
+        };
+
+        // 2. Laat de AI de instructie interpreteren
+        console.log(`🤖 AI interpreteert instructie: "${instruction}"`);
+        const aiResponse = await this.interpreter.interpretUpdate(instruction, context);
+        
+        // 3. Pas de patches toe
+        for (const patch of aiResponse.patches) {
+            this.dataManager.patchData(projectName, patch.file, patch.index, patch.key, patch.value);
+        }
+
+        // 4. Sync naar Google Sheet indien nodig (Sheets-First!)
+        if (aiResponse.syncRequired) {
+            console.log(`📡 Wijzigingen worden gesynchroniseerd naar de Google Sheet van ${projectName}...`);
+            await this.dataManager.syncToSheet(projectName);
+        }
+
+        return {
+            success: true,
+            message: "Site succesvol bijgewerkt op basis van de instructie.",
+            patches: aiResponse.patches,
+            syncPerformed: aiResponse.syncRequired
+        };
     }
 
     /**

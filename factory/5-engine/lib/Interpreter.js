@@ -48,4 +48,33 @@ export class AthenaInterpreter {
         
         return JSON.parse(text);
     }
+
+    /**
+     * Translate an update instruction into a set of data patches
+     */
+    async interpretUpdate(instruction, siteContext) {
+        const systemInstruction = `
+            Je bent de 'Athena Assistant'. Jouw taak is om een update-instructie van een klant te vertalen naar specifieke wijzigingen in de data-bestanden.
+            
+            PROJECT DATA CONTEXT (Enkele voorbeelden van velden):
+            ${JSON.stringify(siteContext)}
+            
+            REGEER UITSLUITEND MET EEN JSON OBJECT IN DIT FORMAAT:
+            {
+                "patches": [
+                    { "file": "basis", "index": 0, "key": "veldnaam", "value": "nieuwe waarde" },
+                    { "file": "site_settings", "index": 0, "key": "light_primary_color", "value": "#hexcode" }
+                ],
+                "syncRequired": true,
+                "reasoning": "waarom heb je deze wijzigingen gekozen?"
+            }
+        `;
+
+        const result = await this.model.generateContent([systemInstruction, `INSTRUCTIE: ${instruction}`]);
+        const response = await result.response;
+        let text = response.text();
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        return JSON.parse(text);
+    }
 }
