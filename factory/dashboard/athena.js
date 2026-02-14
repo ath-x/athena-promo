@@ -12,6 +12,7 @@ import { deployProject } from '../5-engine/deploy-wizard.js';
 import { linkGoogleSheet } from '../5-engine/generate-url-sheet.js';
 import { deleteLocalProject, deleteRemoteRepo } from '../5-engine/cleanup-wizard.js';
 import { AthenaProcessManager } from '../5-engine/lib/ProcessManager.js';
+import { AthenaConfigManager } from '../5-engine/lib/ConfigManager.js';
 import {
     generateDataStructureAPI,
     generateParserInstructionsAPI,
@@ -25,6 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 
+const configManager = new AthenaConfigManager(root);
 const pm = new AthenaProcessManager(root);
 
 // --- MULTER CONFIG (voor uploads) ---
@@ -44,7 +46,7 @@ const upload = multer({ storage });
 let activePreviewProcess = null;
 
 const app = express();
-const port = process.env.DASHBOARD_PORT || 3001;
+const port = configManager.get('ports.dashboard');
 
 // --- SIMPLE LOGGER ---
 app.use((req, res, next) => {
@@ -64,6 +66,10 @@ function spawnDetached(script, logBaseName, port = 0) {
 }
 
 // --- API ENDPOINTS ---
+
+app.get('/api/system/config', (req, res) => {
+    res.json(configManager.getAll());
+});
 
 app.get('/api/projects', (req, res) => {
     const dir = path.join(root, '../input');

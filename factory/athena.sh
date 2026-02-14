@@ -12,11 +12,8 @@ LOG_FILE="output/logs/${TIMESTAMP}_dashboard.log"
 NODE_BIN=$(command -v node)
 $NODE_BIN 6-utilities/rotate-logs.js
 
-# Laad poort uit .env
-if [ -f ".env" ]; then
-    ENV_PORT=$(grep DASHBOARD_PORT .env | head -n 1 | cut -d '=' -f2 | tr -d '\r')
-fi
-FINAL_PORT=${ENV_PORT:-4001}
+# Laad poort uit ConfigManager
+FINAL_PORT=$($NODE_BIN cli/config-cli.js ports.dashboard)
 
 # Controleer of poort al in gebruik is en herstart (Force Reload)
 if fuser $FINAL_PORT/tcp >/dev/null 2>&1 ; then

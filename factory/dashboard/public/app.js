@@ -1,6 +1,18 @@
 // --- CONFIG & STATE ---
 const API = window.location.origin + '/api';
 let currentTool = null;
+let systemConfig = null;
+
+async function loadSystemConfig() {
+    try {
+        const res = await fetch(`${API}/system/config`);
+        systemConfig = await res.json();
+        console.log("🛠️ System Config Loaded:", systemConfig);
+        updateHeaderServerInfo();
+    } catch (e) {
+        console.error("Failed to load system config:", e);
+    }
+}
 
 function getTimeAgo(date) {
     const now = new Date();
@@ -30,8 +42,8 @@ function updateHeaderServerInfo() {
 }
 
 async function openToolServer(type) {
-    const settings = await fetchJSON('/settings') || {};
-    let port = type === 'layout' ? (settings.LAYOUT_EDITOR_PORT || 5003) : (settings.MEDIA_MAPPER_PORT || 5004);
+    if (!systemConfig) await loadSystemConfig();
+    const port = type === 'layout' ? systemConfig.ports.layout : systemConfig.ports.media;
 
     fetch(`${API}/start-${type}-server`, { method: 'POST' });
 
@@ -41,8 +53,8 @@ async function openToolServer(type) {
 }
 
 async function openDock() {
-    const settings = await fetchJSON('/settings') || {};
-    const port = settings.DOCK_PORT || 5002;
+    if (!systemConfig) await loadSystemConfig();
+    const port = systemConfig.ports.dock;
 
     fetch(`${API}/start-dock`, { method: 'POST' });
 
@@ -115,14 +127,14 @@ function showSection(id, btn) {
 
 async function loadServerStatus() {
     const list = document.getElementById('servers-list');
-    const settings = await fetchJSON('/settings') || {};
+    if (!systemConfig) await loadSystemConfig();
 
     // Load factory servers (Dashboard, Dock, etc.)
     const servers = [
-        { id: 'dashboard', port: settings.DASHBOARD_PORT || 5001 },
-        { id: 'dock', port: settings.DOCK_PORT || 5002 },
-        { id: 'layout', port: settings.LAYOUT_EDITOR_PORT || 5003 },
-        { id: 'media', port: settings.MEDIA_MAPPER_PORT || 5004 }
+        { id: 'dashboard', port: systemConfig.ports.dashboard },
+        { id: 'dock', port: systemConfig.ports.dock },
+        { id: 'layout', port: systemConfig.ports.layout },
+        { id: 'media', port: systemConfig.ports.media }
     ];
 
     for (const server of servers) {
@@ -2361,8 +2373,8 @@ async function createSiteType() {
 }
 
 // --- INIT ---
-document.addEventListener('DOMContentLoaded', () => {
-    updateHeaderServerInfo();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSystemConfig();
     loadSites();
     updateSystemStatus();
     setInterval(updateSystemStatus, 60000); // Check elke minuut
