@@ -40,6 +40,25 @@ export class AthenaDataManager {
     }
 
     /**
+     * Get Google Auth client
+     */
+    getAuth() {
+        let serviceAccountPath = path.join(this.root, 'sheet-service-account.json');
+        if (!fs.existsSync(serviceAccountPath)) {
+            serviceAccountPath = path.join(this.root, 'service-account.json');
+        }
+
+        if (!fs.existsSync(serviceAccountPath)) {
+            throw new Error("❌ No sheet-service-account.json or service-account.json found in the root.");
+        }
+
+        return new google.auth.GoogleAuth({
+            keyFile: serviceAccountPath,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+    }
+
+    /**
      * Backup existing data files
      */
     backupData(siteDir, dataDir) {
@@ -113,17 +132,21 @@ export class AthenaDataManager {
         console.log(`🔄 Injecting TSV data for: '${projectName}'`);
         const files = fs.readdirSync(paths.tsvDir).filter(f => f.endsWith('.tsv'));
 
+        if (files.length === 0) {
+             console.warn(`⚠️ No .tsv files found in ${paths.tsvDir}`);
+             return;
+        }
+
         for (const file of files) {
             const tsvPath = path.join(paths.tsvDir, file);
-            const json = await csv({ delimiter: '	', checkType: true }).fromFile(tsvPath);
+            const json = await csv({ delimiter: '\t', checkType: true }).fromFile(tsvPath);
             
             const cleaned = json.map(row => {
                 const newRow = {};
                 Object.keys(row).forEach(key => {
                     let val = row[key];
                     if (typeof val === 'string') {
-                        val = val.replace(/<br>/gi, '
-').trim();
+                        val = val.replace(/<br>/gi, '\n').trim();
                     }
                     newRow[key] = val;
                 });
@@ -132,7 +155,206 @@ export class AthenaDataManager {
 
             const destPath = path.join(paths.dataDir, file.replace('.tsv', '.json').toLowerCase());
             this.saveJSON(destPath, cleaned);
-            console.log(`  ✅ Injected: ${path.basename(destPath)}`);
+            
+             // Extra check on file size
+            const stats = fs.statSync(destPath);
+            if (stats.size < 5) {
+                console.warn(`⚠️  WARNING: ${path.basename(destPath)} is suspiciously small (${stats.size} bytes).`);
+            } else {
+                console.log(`  ✅ Injected: ${path.basename(destPath)}`);
+            }
         }
+        console.log(`\n🎉 Data Sync Complete!`);
+    }
+
+    /**
+     * Ensure hidden configuration tabs exist in the Google Sheet
+     */
+    async ensureHiddenTabs(sheets, spreadsheetId, currentConfig, settingsPath) {
+        let changed = false;
+        const hiddenTabs = ["_style_config", "_links_config"];
+        const newConfig = { ...currentConfig };
+
+        for (const tabName of hiddenTabs) {
+            if (newConfig[tabName]) continue;
+
+            console.log(`  🎨 '${tabName}' tab missing in config. Checking/Creating...`);
+            try {
+                const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
+                let targetSheet = sheetMeta.data.sheets.find(s => s.properties.title === tabName);
+                let newSheetId;
+
+                if (!targetSheet) {
+                    const addRes = await sheets.spreadsheets.batchUpdate({
+                        spreadsheetId,
+                        requestBody: {
+                            requests: [{
+                                addSheet: {
+                                    properties: {
+                                        title: tabName,
+                                        hidden: true,
+                                        gridProperties: { rowCount: 1000, columnCount: 2 } // Simple key-value structure
+                                    }
+                                }
+                            }]
+                        }
+                    });
+                    newSheetId = addRes.data.replies[0].addSheet.properties.sheetId;
+                    console.log(`  ✅ Tab '${tabName}' created (GID: ${newSheetId}).`);
+                } else {
+                    newSheetId = targetSheet.properties.sheetId;
+                    console.log(`  ℹ️ Tab '${tabName}' already existed (GID: ${newSheetId}).`);
+                }
+
+                const baseUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+                newConfig[tabName] = {
+                    editUrl: `${baseUrl}/edit#gid=${newSheetId}`,
+                    exportUrl: `${baseUrl}/export?format=tsv&gid=${newSheetId}`
+                };
+                changed = true;
+            } catch (e) {
+                console.error(`  ❌ Could not process '${tabName}': ${e.message}`);
+            }
+        }
+
+        if (changed) {
+            fs.writeFileSync(settingsPath, JSON.stringify(newConfig, null, 2));
+            console.log("  📝 url-sheet.json updated.");
+        }
+        return newConfig;
+    }
+
+    /**
+     * Migrate old site_settings.json to split content and style
+     */
+    migrateSettings(dataDir) {
+        const settingsJsonPath = path.join(dataDir, 'site_settings.json');
+        const styleJsonPath = path.join(dataDir, 'style_config.json');
+
+        if (fs.existsSync(settingsJsonPath) && !fs.existsSync(styleJsonPath)) {
+            console.log("  🧹 Migration: Splitting old 'site_settings.json' into Content & Style...");
+            try {
+                const raw = JSON.parse(fs.readFileSync(settingsJsonPath, 'utf8'));
+                const data = Array.isArray(raw) ? raw[0] : raw;
+                
+                const content = {};
+                const style = {};
+                
+                Object.keys(data).forEach(k => {
+                    if (k.match(/^(light_|dark_|hero_|font_|color_|btn_|card_|section_|footer_bg|nav_|rounded_|shadow_)/)) {
+                        style[k] = data[k];
+                    } else {
+                        content[k] = data[k];
+                    }
+                });
+
+                // Write split files
+                fs.writeFileSync(settingsJsonPath, JSON.stringify([content], null, 2));
+                fs.writeFileSync(styleJsonPath, JSON.stringify([style], null, 2));
+                console.log("  ✅ Successfully split: style_config.json created.");
+            } catch (e) {
+                console.error("  ❌ Migration failed:", e.message);
+            }
+        }
+    }
+
+    /**
+     * Sync local JSON data back to Google Sheet
+     */
+    async syncToSheet(projectName) {
+        const paths = this.resolvePaths(projectName);
+        if (!fs.existsSync(paths.siteDir)) {
+             throw new Error(`Site directory not found for ${projectName}`);
+        }
+
+        const settingsPath = path.join(paths.settingsDir, 'url-sheet.json');
+        if (!fs.existsSync(settingsPath)) {
+             throw new Error("❌ No url-sheet.json found for this project.");
+        }
+
+        const urlConfig = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+        
+        // Get Spreadsheet ID from the first editUrl
+        const firstUrl = Object.values(urlConfig)[0].editUrl;
+        const spreadsheetId = firstUrl.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
+
+        if (!spreadsheetId) {
+             throw new Error("❌ Could not determine Spreadsheet ID from url-sheet.json.");
+        }
+
+        const auth = this.getAuth();
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // --- 1. CONFIG CHECK & TAB CREATION ---
+        if (urlConfig.site_settings) {
+            const updatedConfig = await this.ensureHiddenTabs(sheets, spreadsheetId, urlConfig, settingsPath);
+            Object.assign(urlConfig, updatedConfig);
+        }
+
+        // --- 2. LOCAL MIGRATION (SPLIT MIXED DATA) ---
+        this.migrateSettings(paths.dataDir);
+
+        // --- 3. UPLOAD LOOP ---
+        for (const [tabName, config] of Object.entries(urlConfig)) {
+            // Determine file for tab
+            let fileName = `${tabName.toLowerCase()}.json`;
+            if (tabName === '_style_config') fileName = 'style_config.json';
+            if (tabName === '_links_config') fileName = 'links_config.json';
+            
+            const jsonPath = path.join(paths.dataDir, fileName);
+
+            if (!fs.existsSync(jsonPath)) {
+                 // Skip silently if missing, unless it's a critical config file
+                 if (tabName !== '_style_config' && tabName !== '_links_config') {
+                     console.warn(`  ⚠️ No local JSON file found for ${tabName} (${fileName}), skipping.`);
+                 }
+                 continue;
+            }
+
+            console.log(`  📤 Uploading ${tabName}...`);
+            let jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+            
+            // Convert to 2D array for Sheets
+            let headers = [];
+            let rows = [];
+
+            if (Array.isArray(jsonData)) {
+                if (jsonData.length === 0) continue;
+                headers = Object.keys(jsonData[0]);
+                rows = [headers];
+                jsonData.forEach(item => {
+                    rows.push(headers.map(h => {
+                        const val = item[h];
+                        return val === null || val === undefined ? "" : val;
+                    }));
+                });
+            } else {
+                // Key-value object (e.g. links_config or style_bindings)
+                headers = ["Key", "Value"];
+                rows = [headers];
+                Object.entries(jsonData).forEach(([k, v]) => {
+                    rows.push([k, typeof v === 'object' ? JSON.stringify(v) : v]);
+                });
+            }
+
+            try {
+                await sheets.spreadsheets.values.clear({
+                    spreadsheetId,
+                    range: `'${tabName}'!A1:Z1000`,
+                });
+
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `'${tabName}'!A1`,
+                    valueInputOption: 'RAW',
+                    requestBody: { values: rows },
+                });
+                console.log(`  ✅ ${tabName} successfully updated.`);
+            } catch (e) {
+                console.error(`  ❌ Error uploading ${tabName}: ${e.message}`);
+            }
+        }
+
+        console.log("✨ Done! The Google Sheet is now in sync with your local visual edits.");
     }
 }

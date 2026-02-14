@@ -22,8 +22,8 @@ echo "=================================================="
 echo "🧹 STAP 0: Logs opschonen (max 10)..."
 node "$PROJECT_ROOT/factory/6-utilities/rotate-logs.js"
 
-DOCK_PORT=4002
-SITE_PORT=3000
+DOCK_PORT=5002
+SITE_PORT=5000
 
 echo "=================================================="
 echo "🔄 STAP 1: Sites overzicht synchroniseren..."

@@ -6,10 +6,12 @@ import { spawn, execSync } from 'child_process';
 import multer from 'multer';
 import cors from 'cors';
 import { getLogPath } from '../5-engine/lib/logger.js';
+import { AthenaDataManager } from '../5-engine/lib/DataManager.js';
 import { createProject, validateProjectName } from '../5-engine/factory.js';
 import { deployProject } from '../5-engine/deploy-wizard.js';
 import { linkGoogleSheet } from '../5-engine/generate-url-sheet.js';
 import { deleteLocalProject, deleteRemoteRepo } from '../5-engine/cleanup-wizard.js';
+import { AthenaProcessManager } from '../5-engine/lib/ProcessManager.js';
 import {
     generateDataStructureAPI,
     generateParserInstructionsAPI,
@@ -22,6 +24,8 @@ import 'dotenv/config';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+
+const pm = new AthenaProcessManager(root);
 
 // --- MULTER CONFIG (voor uploads) ---
 const storage = multer.diskStorage({
@@ -54,16 +58,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(root));
 
 // --- HELPER: DETACHED PROCESS SPAWNER ---
-function spawnDetached(script, logBaseName) {
-    const logPath = getLogPath(logBaseName.replace('.log', ''));
-    const out = fs.openSync(logPath, 'a');
-    const err = fs.openSync(logPath, 'a');
-    const child = spawn(process.execPath, [`5-engine/${script}`], {
-        cwd: root,
-        detached: true,
-        stdio: ['ignore', out, err]
-    });
-    child.unref();
+function spawnDetached(script, logBaseName, port = 0) {
+    const id = logBaseName.replace('.log', '').replace('.txt', '');
+    return pm.startProcess(id, 'utility', port, process.execPath, [`5-engine/${script}`], { cwd: root });
 }
 
 // --- API ENDPOINTS ---
@@ -563,9 +560,9 @@ app.post('/api/projects/:id/link-sheet', async (req, res) => {
 app.post('/api/projects/:id/sync-site-to-sheet', async (req, res) => {
     try {
         const { id } = req.params;
-        const tool = path.join(root, '5-engine', 'sync-json-to-sheet.js');
-        const output = execSync(`"${process.execPath}" "${tool}" "${id}"`, { cwd: root }).toString();
-        res.json({ success: true, details: output });
+        const manager = new AthenaDataManager(root);
+        await manager.syncToSheet(id);
+        res.json({ success: true, details: "Sync completed successfully. Check server logs for details." });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -611,19 +608,15 @@ app.post('/api/sync-to-sheets/:id', async (req, res) => {
 app.post('/api/pull-from-sheets/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const tool = path.join(root, '5-engine', 'sync-sheet-to-json.js');
         console.log(`[SHEETS] Pull & Backup gestart voor: ${id}`);
 
-        const output = execSync(`"${process.execPath}" "${tool}" "${id}"`, {
-            cwd: root,
-            env: { ...process.env }
-        }).toString();
+        const manager = new AthenaDataManager(root);
+        await manager.syncFromSheet(id);
 
-        res.json({ success: true, message: 'Data succesvol opgehaald! (Lokale backup gemaakt)', details: output });
+        res.json({ success: true, message: 'Data succesvol opgehaald! (Lokale backup gemaakt)', details: "Sync completed successfully." });
     } catch (e) {
-        const stderr = e.stderr ? e.stderr.toString() : e.message;
-        console.error(`[SHEETS] Pull fout voor ${req.params.id}:`, stderr);
-        res.status(500).json({ success: false, error: stderr });
+        console.error(`[SHEETS] Pull fout voor ${req.params.id}:`, e.message);
+        res.status(500).json({ success: false, error: e.message });
     }
 });
 
@@ -849,7 +842,10 @@ app.post('/api/generate-overview', (req, res) => {
 app.get('/api/servers/check/:port', (req, res) => {
     const { port } = req.params;
     try {
-        // Gebruik fuser of lsof om te checken of poort in gebruik is
+        const active = pm.listActive();
+        if (active[port]) return res.json({ online: true });
+        
+        // Fallback check
         execSync(`fuser ${port}/tcp`, { stdio: 'ignore' });
         res.json({ online: true });
     } catch (e) {
@@ -857,83 +853,39 @@ app.get('/api/servers/check/:port', (req, res) => {
     }
 });
 
-app.post('/api/servers/stop/:type', (req, res) => {
+app.post('/api/servers/stop/:type', async (req, res) => {
     const { type } = req.params;
     let port;
-    if (type === 'dock') port = process.env.DOCK_PORT || 4002;
-    if (type === 'layout') port = process.env.LAYOUT_EDITOR_PORT || 4003;
-    if (type === 'media') port = process.env.MEDIA_MAPPER_PORT || 4004;
-    if (type === 'preview') port = process.env.PREVIEW_PORT || 3000;
-    if (type === 'dashboard') port = process.env.DASHBOARD_PORT || 4001;
+    if (type === 'dock') port = process.env.DOCK_PORT || 5002;
+    if (type === 'layout') port = process.env.LAYOUT_EDITOR_PORT || 5003;
+    if (type === 'media') port = process.env.MEDIA_MAPPER_PORT || 5004;
+    if (type === 'preview') port = process.env.PREVIEW_PORT || 5000;
+    if (type === 'dashboard') port = process.env.DASHBOARD_PORT || 5001;
 
     if (port) {
-        try {
-            execSync(`fuser -k ${port}/tcp`);
-            res.json({ success: true, message: `Server ${type} op poort ${port} gestopt.` });
-        } catch (e) {
-            res.json({ success: true, message: "Server was waarschijnlijk al gestopt." });
-        }
+        const stopped = await pm.stopProcessByPort(port);
+        res.json({ success: true, message: stopped ? `Server ${type} op poort ${port} gestopt.` : "Server was waarschijnlijk al gestopt." });
     } else {
         res.status(400).json({ error: "Onbekend server type" });
     }
 });
 
-// GET ALL ACTIVE SITE SERVERS (detect via ps and fuser)
+// GET ALL ACTIVE SITE SERVERS (detect via registry and fallback)
 app.get('/api/servers/active', (req, res) => {
     try {
-        const registryPath = path.join(root, 'config/site-ports.json');
+        const active = pm.listActive();
         const activeServers = [];
-        const portRegistry = fs.existsSync(registryPath) ? JSON.parse(fs.readFileSync(registryPath, 'utf8')) : {};
-
-        // 1. Check ports from registry
-        for (const [siteName, port] of Object.entries(portRegistry)) {
-            try {
-                const result = execSync(`fuser ${port}/tcp 2>/dev/null || echo ""`, { encoding: 'utf8' }).trim();
-                if (result && result !== '') {
-                    const pid = result.split(/\s+/)[0];
-                    activeServers.push({
-                        siteName,
-                        port,
-                        pid,
-                        url: `http://localhost:${port}/${siteName}/`
-                    });
-                }
-            } catch (e) { }
+        
+        for (const port in active) {
+            const info = active[port];
+            activeServers.push({
+                siteName: info.id,
+                port: parseInt(port),
+                pid: info.pid,
+                type: info.type,
+                url: `http://localhost:${port}/${info.id}/`
+            });
         }
-
-        // 2. Always check port 3000 (Default Fallback)
-        try {
-            const result3000 = execSync(`fuser 3000/tcp 2>/dev/null || echo ""`, { encoding: 'utf8' }).trim();
-            if (result3000 && result3000 !== '') {
-                const pid = result3000.split(/\s+/)[0];
-                // Try to find which site is running on 3000
-                // We scan sites for vite.config.js with port 3000
-                const sitesDir = path.join(root, '../sites');
-                const siteDirs = fs.readdirSync(sitesDir).filter(f => fs.statSync(path.join(sitesDir, f)).isDirectory());
-
-                let detectedSite = 'Unknown Site (3000)';
-                for (const dir of siteDirs) {
-                    const viteConfig = path.join(sitesDir, dir, 'vite.config.js');
-                    if (fs.existsSync(viteConfig)) {
-                        const content = fs.readFileSync(viteConfig, 'utf8');
-                        if (content.includes('port: 3000')) {
-                            detectedSite = dir;
-                            break;
-                        }
-                    }
-                }
-
-                // Alleen toevoegen als hij nog niet in de lijst staat (via registry)
-                if (!activeServers.some(s => s.port === 3000)) {
-                    activeServers.push({
-                        siteName: detectedSite,
-                        port: 3000,
-                        pid,
-                        url: `http://localhost:3000/${detectedSite}/`
-                    });
-                }
-            }
-        } catch (e) { }
 
         res.json({ servers: activeServers });
     } catch (e) {
@@ -942,25 +894,21 @@ app.get('/api/servers/active', (req, res) => {
 });
 
 // STOP A SPECIFIC SERVER BY PORT
-app.post('/api/servers/kill/:port', (req, res) => {
+app.post('/api/servers/kill/:port', async (req, res) => {
     const { port } = req.params;
     try {
-        execSync(`fuser -k ${port}/tcp 2>/dev/null || true`);
+        await pm.stopProcessByPort(port);
         res.json({ success: true, message: `Server on port ${port} stopped` });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
-app.post('/api/start-layout-server', (req, res) => {
+app.post('/api/start-layout-server', async (req, res) => {
     try {
-        const port = process.env.LAYOUT_EDITOR_PORT || 3030;
-        // Kill existing process on port if any
-        try {
-            execSync(`fuser -k ${port}/tcp 2>/dev/null || true`);
-        } catch (e) { }
-
-        spawnDetached('layout-visualizer.js', 'layout-editor.log');
+        const port = process.env.LAYOUT_EDITOR_PORT || 5003;
+        await pm.stopProcessByPort(port);
+        pm.startProcess('layout-editor', 'editor', port, process.execPath, ['5-engine/layout-visualizer.js'], { cwd: root });
         res.json({ success: true, message: `Layout Editor starting on port ${port}...` });
     } catch (e) {
         console.error(e);
@@ -968,15 +916,11 @@ app.post('/api/start-layout-server', (req, res) => {
     }
 });
 
-app.post('/api/start-media-server', (req, res) => {
+app.post('/api/start-media-server', async (req, res) => {
     try {
-        const port = process.env.MEDIA_MAPPER_PORT || 3031;
-        // Kill existing process on port if any
-        try {
-            execSync(`fuser -k ${port}/tcp 2>/dev/null || true`);
-        } catch (e) { }
-
-        spawnDetached('media-visualizer.js', 'media-visualizer.log');
+        const port = process.env.MEDIA_MAPPER_PORT || 5004;
+        await pm.stopProcessByPort(port);
+        pm.startProcess('media-mapper', 'editor', port, process.execPath, ['5-engine/media-visualizer.js'], { cwd: root });
         res.json({ success: true, message: `Media Mapper starting on port ${port}...` });
     } catch (e) {
         console.error(e);
@@ -984,19 +928,12 @@ app.post('/api/start-media-server', (req, res) => {
     }
 });
 
-app.post('/api/start-dock', (req, res) => {
+app.post('/api/start-dock', async (req, res) => {
     try {
         const dockDir = path.join(root, '..', 'dock');
-        const port = process.env.DOCK_PORT || 4002;
+        const port = process.env.DOCK_PORT || 5002;
 
-        // Kill existing process on port if any
-        try {
-            execSync(`fuser -k ${port}/tcp 2>/dev/null || true`);
-        } catch (e) { }
-
-        const logPath = getLogPath('athena-dock');
-        const out = fs.openSync(logPath, 'a');
-        const err = fs.openSync(logPath, 'a');
+        await pm.stopProcessByPort(port);
 
         // NIEUW: Check voor node_modules in dock
         if (!fs.existsSync(path.join(dockDir, 'node_modules'))) {
@@ -1004,12 +941,7 @@ app.post('/api/start-dock', (req, res) => {
             execSync('pnpm install', { cwd: dockDir, stdio: 'inherit' });
         }
 
-        const child = spawn('pnpm', ['dev', '--port', port.toString(), '--host'], {
-            cwd: dockDir,
-            detached: true,
-            stdio: ['ignore', out, err]
-        });
-        child.unref();
+        pm.startProcess('athena-dock', 'dock', port, 'pnpm', ['dev', '--port', port.toString(), '--host'], { cwd: dockDir });
 
         res.json({ success: true, message: `Athena Dock starting on port ${port}...` });
     } catch (e) {
@@ -1021,29 +953,21 @@ app.post('/api/start-dock', (req, res) => {
 app.post('/api/dev/start', async (req, res) => {
     try {
         const { projectName } = req.body;
-        const dockPort = process.env.DOCK_PORT || 4002;
-        const previewPort = process.env.PREVIEW_PORT || 3000;
+        const dockPort = process.env.DOCK_PORT || 5002;
+        const previewPort = process.env.PREVIEW_PORT || 5000;
 
         console.log(`[DEV] Starting Full Environment for ${projectName}`);
 
         // 1. Start Dock
         const dockDir = path.join(root, '..', 'dock');
-        try { execSync(`fuser -k ${dockPort}/tcp 2>/dev/null || true`); } catch (e) { }
-        const dockLog = fs.openSync(getLogPath('athena-dock'), 'a');
-        const dockProc = spawn('pnpm', ['dev', '--port', dockPort.toString(), '--host'], {
-            cwd: dockDir, detached: true, stdio: ['ignore', dockLog, dockLog]
-        });
-        dockProc.unref();
+        await pm.stopProcessByPort(dockPort);
+        pm.startProcess('athena-dock', 'dock', dockPort, 'pnpm', ['dev', '--port', dockPort.toString(), '--host'], { cwd: dockDir });
 
         // 2. Start Site Preview
         const siteDir = path.join(root, '../sites', projectName);
         if (fs.existsSync(siteDir)) {
-            try { execSync(`fuser -k ${previewPort}/tcp 2>/dev/null || true`); } catch (e) { }
-            const siteLog = fs.openSync(getLogPath(`preview_${projectName}`), 'a');
-            const siteProc = spawn('pnpm', ['dev', '--port', previewPort.toString(), '--host'], {
-                cwd: siteDir, detached: true, stdio: ['ignore', siteLog, siteLog]
-            });
-            siteProc.unref();
+            await pm.stopProcessByPort(previewPort);
+            pm.startProcess(projectName, 'preview', previewPort, 'pnpm', ['dev', '--port', previewPort.toString(), '--host'], { cwd: siteDir });
         }
 
         res.json({
@@ -1083,7 +1007,7 @@ function getSitePort(siteId, siteDir) {
         if (match) return parseInt(match[1]);
     }
 
-    return 3000; // Fallback
+    return 5000; // Fallback (sandbox)
 }
 
 app.post('/api/sites/:id/preview', async (req, res) => {
@@ -1098,27 +1022,14 @@ app.post('/api/sites/:id/preview', async (req, res) => {
     const previewPort = getSitePort(id, siteDir);
 
     // Stop alleen andere processen op DEZE specifieke poort
-    try {
-        execSync(`fuser -k ${previewPort}/tcp 2>/dev/null || true`);
-    } catch (e) { }
+    await pm.stopProcessByPort(previewPort);
 
     console.log(`Starting preview for ${id} on port ${previewPort}...`);
 
-    const logPath = getLogPath(`preview_${id}`);
-    const out = fs.openSync(logPath, 'w');
-
-    const child = spawn(pnpmPath, ['dev', '--port', previewPort.toString(), '--host'], {
+    pm.startProcess(id, 'preview', previewPort, pnpmPath, ['dev', '--port', previewPort.toString(), '--host'], {
         cwd: siteDir,
-        detached: true,
-        stdio: ['ignore', out, out],
         env: { ...process.env }
     });
-
-    child.on('error', (err) => {
-        console.error(`Failed to start preview for ${id}:`, err);
-    });
-
-    child.unref(); // We laten hem draaien, dashboard hoeft hem niet te managen
 
     // Determine the correct base URL
     let baseUrl = `/${id}/`;
