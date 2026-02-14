@@ -1010,6 +1010,7 @@ const DockFrame = () => {
           ) : (
             <p className="text-sm text-slate-400 italic">No sections detected yet.</p>
           )}
+          </div>
         </aside>
       </div>
     </div>
