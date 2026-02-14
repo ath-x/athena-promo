@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       sites:
-        description: 'Site(s) om te publiceren (spatie-gescheiden, bv. "karel-portfolio-ath de-salon-site"). Leeg = alle sites.'
+        description: 'Site(s) om te publiceren (spatie-gescheiden, bv. "karel-portfolio-ath"). Leeg = alle sites.'
         required: false
         default: ''
   push:
@@ -16,13 +16,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'athenacmsfactory/athena-2'
+    # Verwijder de harde check op repo-naam om sandbox-vriendelijk te zijn
     steps:
       - name: 🛰️ Checkout Monorepo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.ATHENA_DEPLOY_TOKEN }}
+          token: ${{ secrets.ATHENA_DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: 🔍 Detect Changed Sites
         id: detect
@@ -30,10 +30,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             INPUT_SITES="${{ github.event.inputs.sites }}"
             if [ -n "$INPUT_SITES" ]; then
-              # Handmatige trigger met specifieke sites
               CHANGED_SITES="$INPUT_SITES"
             else
-              # Handmatige trigger zonder input: publiceer ALLE sites
               CHANGED_SITES=$(ls -d sites/*/ 2>/dev/null | xargs -I{} basename {} | xargs)
             fi
           else
@@ -43,11 +41,29 @@ jobs:
           echo "sites=$CHANGED_SITES" >> $GITHUB_OUTPUT
           echo "Gevonden wijzigingen in: $CHANGED_SITES"
 
+      - name: 🛠️ Setup Node.js & pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - name: 🏗️ Pre-flight Build Check
+        run: |
+          for SITE in ${{ steps.detect.outputs.sites }}; do
+            if [ -d "sites/$SITE" ]; then
+              echo "🔨 Validating build for: $SITE"
+              cd "sites/$SITE"
+              pnpm install --no-frozen-lockfile
+              pnpm build
+              cd ../..
+            fi
+          done
+
       - name: 🚀 Push Subtrees to Client Repos
         env:
-          GITHUB_TOKEN: ${{ secrets.ATHENA_DEPLOY_TOKEN }}
-          API_TOKEN_GITHUB: ${{ secrets.ATHENA_DEPLOY_TOKEN }}
-          OWNER: "athena-cms-factory"
+          GITHUB_TOKEN: ${{ secrets.ATHENA_DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.ATHENA_DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
+          # OWNER dynamisch bepalen op basis van de huidige repository
+          OWNER: ${{ github.repository_owner }}
         run: |
           for SITE in ${{ steps.detect.outputs.sites }}; do
             echo "📦 Verwerken van site: $SITE"
@@ -57,14 +73,12 @@ jobs:
               if ! gh repo view $OWNER/$SITE >/dev/null 2>&1; then
                 echo "➕ Repo $OWNER/$SITE bestaat niet. Aanmaken..."
                 gh repo create $OWNER/$SITE --public --description "Athena CMS Site: $SITE"
-                # Optioneel: GitHub Pages inschakelen kan ook via 'gh repo edit'
-                # Maar de Action in de site zelf (deploy.yml) regelt de feitelijke publicatie naar gh-pages
               fi
 
               REMOTE_URL="https://x-access-token:${API_TOKEN_GITHUB}@github.com/${OWNER}/${SITE}.git"
               echo "Pushing sites/$SITE to $REMOTE_URL"
               
-              # Gebruik subtree split en push -f om de remote te overschrijven met de monorepo-inhoud
+              # Gebruik subtree split om de site-map te isoleren en te pushen
               SPLIT_SHA=$(git subtree split --prefix=sites/$SITE main)
               git push "$REMOTE_URL" "$SPLIT_SHA":refs/heads/main --force
             fi
