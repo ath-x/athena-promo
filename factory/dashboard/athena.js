@@ -28,6 +28,7 @@ const root = path.resolve(__dirname, '..');
 
 const configManager = new AthenaConfigManager(root);
 const pm = new AthenaProcessManager(root);
+const lm = new AthenaLogManager(root);
 
 // --- MULTER CONFIG (voor uploads) ---
 const storage = multer.diskStorage({
@@ -69,6 +70,20 @@ function spawnDetached(script, logBaseName, port = 0) {
 
 app.get('/api/system/config', (req, res) => {
     res.json(configManager.getAll());
+});
+
+app.get('/api/system/logs', (req, res) => {
+    res.json(lm.getStatus());
+});
+
+app.post('/api/system/logs/rotate', async (req, res) => {
+    const result = await lm.rotate();
+    res.json({ success: true, ...result });
+});
+
+app.post('/api/system/logs/clear', (req, res) => {
+    const result = lm.clearAll();
+    res.json({ success: true, ...result });
 });
 
 app.get('/api/projects', (req, res) => {

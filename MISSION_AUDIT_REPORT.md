@@ -17,11 +17,24 @@ The Athena Sandbox is a sophisticated monorepo but suffers from 'script sprawl' 
 *   **Code Reuse:** The component assembly process copies files directly; a shared library or advanced scaffolding system would reduce disk usage and improve maintainability.
 *   **Disk/RAM Efficiency:** Standardizing on `pnpm` is a good start, but deeper pruning of redundant dependencies across site-types is possible.
 
-### 4. Isolation Check
-*   **Port Management:** Isolation is maintained via `factory/config/site-ports.json`.
-*   **Update:** I have updated `factory/.env` and `launch.sh` to use the 5000 range (DASHBOARD_PORT=5001, DOCK_PORT=5002, etc.) to prevent conflicts with production environments running on 400x.
-*   **Paths:** Relative pathing (`./`) in generated sites and the use of `import.meta.env.BASE_URL` effectively prevent environment leakage.
+### 4. Isolation & Stability Check (VERIFIED)
 
-## 🚀 Recommended Refactoring for Jules
-**Task:** Standardize the Data Synchronization Layer.
-**Description:** Replace the fragmented `sync-*.js` scripts in `factory/5-engine/` with a unified `AthenaDataManager` class in `factory/5-engine/lib/`. This manager should handle all sync directions (JSON <-> Sheet <-> TSV) through a single CLI entry point and a consistent API.
+* **Config Management:** GECENTRALISEERD via `ConfigManager.js`. Poorten worden dynamisch opgehaald.
+
+* **Process Management:** STABIEL via `ProcessManager.js`. Tracking van PIDs en veilige afsluiting via `pm-cli.js`.
+
+* **Log Management:** GEOPTIMALISEERD via `LogManager.js`. Automatische rotatie en opschonen via Dashboard.
+
+* **Ports:** Sandbox draait nu volledig op de 5000-range (5001 Dashboard, 5002 Dock, etc.) om conflicten met productie te voorkomen.
+
+
+
+## 🚀 Voltooide Refactoring
+
+1. **Data Sync Layer:** Jules heeft `DataManager.js` gebouwd. Alle `sync-*.js` scripts zijn nu wrappers.
+
+2. **Asset Scavenger:** Jules heeft de scavenger geüpgraded naar een recursieve deep-search.
+
+3. **Thema Engine:** Geoptimaliseerd voor Tailwind v4 met RGB-variabelen en Dark Mode ondersteuning.
+
+4. **Dashboard:** Volledig gerestyled en gekoppeld aan de nieuwe management utilities.

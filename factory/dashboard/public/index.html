@@ -962,6 +962,27 @@
                     style="text-align: right; color: var(--text-muted); font-size: 0.75rem;">-- GB beschikbaar</p>
             </div>
 
+            <div class="divider"></div>
+            <h4>Logbeheer</h4>
+            <p id="log-detail" class="muted small mb-10">Laden...</p>
+
+            <div class="btn-grid mt-10" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button onclick="runMaintenance('logs-rotate')" class="tool-btn"
+                    style="text-align: left; padding: 15px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: #fff;">
+                    <i class="fa-solid fa-broom-ball accent" style="font-size: 1.2rem; margin-bottom: 8px;"></i>
+                    <div><strong style="display: block;">Log Opkuis</strong><small
+                            style="color: var(--text-muted);">Behoud laatste 5 logs</small></div>
+                </button>
+                <button onclick="runMaintenance('logs-clear')" class="tool-btn"
+                    style="text-align: left; padding: 15px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: #fff;">
+                    <i class="fa-solid fa-dumpster fire" style="font-size: 1.2rem; margin-bottom: 8px; color: var(--error);"></i>
+                    <div><strong style="display: block;">Wipe Logs</strong><small
+                            style="color: var(--text-muted);">Verwijder alles</small></div>
+                </button>
+            </div>
+
+            <div class="divider"></div>
+
             <div class="btn-grid mt-20" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <button onclick="runMaintenance('pnpm-prune')" class="tool-btn"
                     style="text-align: left; padding: 15px; background: var(--bg-darker); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: #fff;">

@@ -2093,6 +2093,7 @@ async function updateSystemStatus() {
 function openMaintenance() {
     openModal('maintenance-modal');
     updateSystemStatus();
+    updateLogStatus();
 }
 
 async function runMaintenance(action) {
@@ -2100,16 +2101,36 @@ async function runMaintenance(action) {
     log.classList.remove('hidden');
     log.innerText = "⏳ Bezig met uitvoeren...";
 
+    let endpoint = '/maintenance';
+    let method = 'POST';
+    let body = { action };
+
+    if (action === 'logs-rotate') {
+        endpoint = '/system/logs/rotate';
+    } else if (action === 'logs-clear') {
+        endpoint = '/system/logs/clear';
+        if (!confirm("Weet je het zeker? Dit verwijdert ALLE logbestanden definitief.")) return;
+    }
+
     try {
-        const res = await fetch(`${API}/maintenance`, {
-            method: 'POST',
+        const res = await fetch(`${API}${endpoint}`, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action })
+            body: JSON.stringify(body)
         });
         const data = await res.json();
-        log.innerText = data.success ? `✅ ${data.message}` : `❌ Fout: ${data.error}`;
+        log.innerText = data.success ? (data.message || `✅ Actie voltooid (Verwijderd: ${data.deleted || data.cleared || 0})`) : `❌ Fout: ${data.error}`;
         updateSystemStatus();
+        updateLogStatus();
     } catch (e) { log.innerText = "❌ Netwerkfout."; }
+}
+
+async function updateLogStatus() {
+    const status = await fetchJSON('/system/logs');
+    const logDetail = document.getElementById('log-detail');
+    if (status && logDetail) {
+        logDetail.innerText = `${status.count} bestanden, totaal: ${status.totalSize}`;
+    }
 }
 
 // --- SITETYPE WIZARD ---
