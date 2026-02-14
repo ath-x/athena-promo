@@ -21,7 +21,7 @@ FINAL_PORT=${ENV_PORT:-4001}
 # Controleer of poort al in gebruik is en herstart (Force Reload)
 if fuser $FINAL_PORT/tcp >/dev/null 2>&1 ; then
     echo "Recyclen van bestaand proces op poort $FINAL_PORT..."
-    fuser -k $FINAL_PORT/tcp >/dev/null 2>&1
+    $NODE_BIN cli/pm-cli.js stop $FINAL_PORT
     sleep 1
 fi
 

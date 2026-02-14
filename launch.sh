@@ -88,8 +88,8 @@ echo "=================================================="
 
 # Functie om netjes af te sluiten
 cleanup() {
-    echo -e "\n🛑 Servers worden gestopt..."
-    kill $DOCK_PID $SITE_PID 2>/dev/null
+    echo -e "\n🛑 Servers worden gestopt via ProcessManager..."
+    node "$PROJECT_ROOT/factory/cli/pm-cli.js" stop-all
     exit
 }
 

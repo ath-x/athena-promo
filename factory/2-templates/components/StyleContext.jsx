@@ -19,22 +19,58 @@ export const StyleProvider = ({ children, data = {} }) => {
     // Apply CSS variables to :root whenever styles change
     useEffect(() => {
         const root = document.documentElement;
-        Object.entries(styles).forEach(([key, value]) => {
-            // Skip metadata keys (prefixed with _)
-            if (key.startsWith('_')) return;
-            // Only set CSS custom properties (--prefixed)
-            if (key.startsWith('--')) {
-                root.style.setProperty(key, value);
-            }
-        });
-
-        return () => {
-            // Cleanup: remove custom properties on unmount
-            Object.keys(styles).forEach(key => {
+        
+        const applyVariables = (targetStyles, selector = '') => {
+            Object.entries(targetStyles).forEach(([key, value]) => {
+                if (key.startsWith('_')) return; // Skip metadata
                 if (key.startsWith('--')) {
-                    root.style.removeProperty(key);
+                    if (selector === '.dark') {
+                        // For dark mode, we use a CSS rule to ensure it only applies when .dark is present
+                        // Note: This is a simplified approach, real implementation might use a stylesheet
+                        // For now, we'll just set the variables directly if root has .dark
+                        if (root.classList.contains('dark')) {
+                            root.style.setProperty(key, value);
+                        }
+                    } else {
+                        root.style.setProperty(key, value);
+                    }
                 }
             });
+        };
+
+        // Apply light/default variables
+        applyVariables(styles);
+
+        // Apply dark mode overrides if present and active
+        if (styles._dark_mode && root.classList.contains('dark')) {
+            applyVariables(styles._dark_mode);
+        }
+
+        // Add a mutation observer to re-apply if .dark class is toggled
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    applyVariables(styles);
+                    if (styles._dark_mode && root.classList.contains('dark')) {
+                        applyVariables(styles._dark_mode);
+                    }
+                }
+            });
+        });
+
+        observer.observe(root, { attributes: true });
+
+        return () => {
+            observer.disconnect();
+            // Cleanup: remove custom properties on unmount
+            Object.keys(styles).forEach(key => {
+                if (key.startsWith('--')) root.style.removeProperty(key);
+            });
+            if (styles._dark_mode) {
+                Object.keys(styles._dark_mode).forEach(key => {
+                    if (key.startsWith('--')) root.style.removeProperty(key);
+                });
+            }
         };
     }, [styles]);
 

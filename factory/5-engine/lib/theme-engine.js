@@ -36,26 +36,43 @@ const COLOR_MAP = {
     title: '--color-title',
     button_bg: '--color-button-bg',
     card_bg: '--color-card-bg',
-    header_bg: '--color-header-bg',
-    success: '--color-success',
-    warning: '--color-warning',
-    error: '--color-error'
+    header_bg: '--color-header-bg'
 };
 
 export class ThemeEngine {
 
     /**
-     * Returns sensible defaults matching modern.css for blueprints without design_system.
-     * @returns {Object} CSS variable map
+     * Converts hex to RGB components for Tailwind v4 opacity support.
+     * @param {string} hex 
+     * @returns {string} e.g. "15 23 42"
+     */
+    static hexToRgb(hex) {
+        if (!hex || typeof hex !== 'string') return "0 0 0";
+        const cleanHex = hex.replace('#', '');
+        const r = parseInt(cleanHex.substring(0, 2), 16);
+        const g = parseInt(cleanHex.substring(2, 4), 16);
+        const b = parseInt(cleanHex.substring(4, 6), 16);
+        return isNaN(r) ? "0 0 0" : `${r} ${g} ${b}`;
+    }
+
+    /**
+     * Returns sensible defaults.
      */
     static getDefaults() {
-        return { ...DEFAULT_THEME };
+        const config = { ...DEFAULT_THEME };
+        // Add RGB variants for defaults
+        Object.entries(config).forEach(([key, val]) => {
+            if (key.startsWith('--color-') && val.startsWith('#')) {
+                config[`${key}-rgb`] = ThemeEngine.hexToRgb(val);
+            }
+        });
+        return config;
     }
 
     /**
      * Generates a style_config.json object from a blueprint's design_system.
      * @param {Object} blueprint - The full blueprint object.
-     * @returns {Object} CSS variable map ready for style_config.json
+     * @returns {Object} CSS variable map
      */
     static generate(blueprint) {
         const ds = blueprint?.design_system;
@@ -63,35 +80,48 @@ export class ThemeEngine {
 
         const config = { ...DEFAULT_THEME };
 
-        // Map colors
+        // Process colors
         if (ds.colors && typeof ds.colors === 'object') {
             for (const [key, value] of Object.entries(ds.colors)) {
-                const cssVar = COLOR_MAP[key];
-                if (cssVar) {
-                    config[cssVar] = value;
-                } else {
-                    // Custom color → --color-{key}
-                    config[`--color-${key}`] = value;
+                const cssVar = COLOR_MAP[key] || `--color-${key}`;
+                config[cssVar] = value;
+                // Add RGB variant for Tailwind / opacity usage
+                if (value.startsWith('#')) {
+                    config[`${cssVar}-rgb`] = ThemeEngine.hexToRgb(value);
                 }
             }
 
-            // Derive missing variables from provided colors
-            if (ds.colors.primary && !ds.colors.heading) config['--color-heading'] = ds.colors.primary;
-            if (ds.colors.primary && !ds.colors.title) config['--color-title'] = ds.colors.primary;
-            if (ds.colors.accent && !ds.colors.button_bg) config['--color-button-bg'] = ds.colors.accent;
+            // Derive logic
+            if (ds.colors.primary && !ds.colors.heading) {
+                config['--color-heading'] = ds.colors.primary;
+                config['--color-heading-rgb'] = ThemeEngine.hexToRgb(ds.colors.primary);
+            }
+            if (ds.colors.primary && !ds.colors.title) {
+                config['--color-title'] = ds.colors.primary;
+                config['--color-title-rgb'] = ThemeEngine.hexToRgb(ds.colors.primary);
+            }
+            if (ds.colors.accent && !ds.colors.button_bg) {
+                config['--color-button-bg'] = ds.colors.accent;
+                config['--color-button-bg-rgb'] = ThemeEngine.hexToRgb(ds.colors.accent);
+            }
         }
 
-        // Map typography
+        // Dark mode overrides (if defined in blueprint)
+        if (ds.dark_mode && typeof ds.dark_mode === 'object') {
+            config['_dark_mode'] = {};
+            for (const [key, value] of Object.entries(ds.dark_mode)) {
+                const cssVar = COLOR_MAP[key] || `--color-${key}`;
+                config['_dark_mode'][cssVar] = value;
+                if (value.startsWith('#')) {
+                    config['_dark_mode'][`${cssVar}-rgb`] = ThemeEngine.hexToRgb(value);
+                }
+            }
+        }
+
+        // Typography & Radius
         if (ds.font_sans) config['--font-sans'] = ds.font_sans;
         if (ds.font_serif) config['--font-serif'] = ds.font_serif;
-
-        // Map radius
         if (ds.radius) config['--radius-custom'] = ds.radius;
-
-        // Store typography scale as metadata (useful for components)
-        if (ds.typography_scale) {
-            config['_typography_scale'] = ds.typography_scale;
-        }
 
         return config;
     }
