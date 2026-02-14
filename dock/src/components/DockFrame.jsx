@@ -75,7 +75,7 @@ const DockFrame = () => {
   const getSiteApiUrl = () => {
     if (!selectedSite) return null;
     // Support both object (new) and string (legacy) formats
-    const baseUrl = selectedSite.url || (typeof selectedSite === 'string' ? `http://localhost:3000/${selectedSite}/` : '');
+    const baseUrl = selectedSite.url || (typeof selectedSite === 'string' ? `http://localhost:5000/${selectedSite}/` : '');
     if (!baseUrl) return null;
 
     const cleanBase = baseUrl.replace(/\/$/, '');
@@ -89,7 +89,7 @@ const DockFrame = () => {
       return;
     }
 
-    const baseUrl = selectedSite.url || (typeof selectedSite === 'string' ? `http://localhost:3000/${selectedSite}/` : '');
+    const baseUrl = selectedSite.url || (typeof selectedSite === 'string' ? `http://localhost:5000/${selectedSite}/` : '');
     const cleanBase = baseUrl.replace(/\/$/, '');
     const manifestUrl = `${cleanBase}/data/pages-manifest.json`;
 

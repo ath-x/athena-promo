@@ -66,17 +66,37 @@ export default function DesignControls({ onColorChange, siteStructure }) {
         const modePrefix = newState.theme === 'dark' ? 'dark_' : 'light_';
         onColorChange('theme', newState.theme, false);
         Object.keys(newState).forEach(k => {
-          // Send theme colors, global vars, and the new layout/header controls
           if (k.startsWith(modePrefix) || k.startsWith('global_') || k.startsWith('header_') || k === 'content_top_offset' || k === 'hero_overlay_opacity') {
-            onColorChange(k, newState[k], false);
+             // NEW: If it's a color, also generate and send the RGB variant
+             if (newState[k] && typeof newState[k] === 'string' && newState[k].startsWith('#')) {
+                const rgb = hexToRgb(newState[k]);
+                // Map local key to the actual CSS variable name
+                const cssVar = k.replace('light_', '--color-').replace('dark_', '--color-').replace('_color', '');
+                onColorChange(`${cssVar}-rgb`, rgb, false);
+             }
+             onColorChange(k, newState[k], false);
           }
         });
       } else {
+        // Handle single color change
+        if (value && typeof value === 'string' && value.startsWith('#')) {
+           const rgb = hexToRgb(value);
+           const cssVar = key.replace('light_', '--color-').replace('dark_', '--color-').replace('_color', '');
+           onColorChange(`${cssVar}-rgb`, rgb, false);
+        }
         onColorChange(key, value, false);
       }
 
       return newState;
     });
+  };
+
+  const hexToRgb = (hex) => {
+    const cleanHex = hex.replace('#', '');
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+    return isNaN(r) ? "0 0 0" : `${r} ${g} ${b}`;
   };
 
   // Re-sync listener
@@ -91,12 +111,18 @@ export default function DesignControls({ onColorChange, siteStructure }) {
   // Save mode (persistent)
   const handleSave = (key, value) => {
     onColorChange(key, value, true);
+    // Also save RGB variant if color
+    if (value && typeof value === 'string' && value.startsWith('#')) {
+       const rgb = hexToRgb(value);
+       const cssVar = key.replace('light_', '--color-').replace('dark_', '--color-').replace('_color', '');
+       onColorChange(`${cssVar}-rgb`, rgb, true);
+    }
   };
 
   const handleStyleChange = async (styleName) => {
     if (!window.confirm(`Weet je zeker dat je wilt wisselen naar ${styleName}? Dit herlaadt de site.`)) return;
     // FIX: Dynamically derive port/origin from the connected site's URL
-    let baseUrl = 'http://localhost:3000';
+    let baseUrl = 'http://localhost:5000';
     if (siteStructure?.url) {
       try {
         const u = new URL(siteStructure.url);
@@ -107,7 +133,6 @@ export default function DesignControls({ onColorChange, siteStructure }) {
     }
 
     const siteName = siteStructure?.url?.split('/')[3] || 'dock-test-site';
-    // Remove potential double slashes if siteName is empty or malformed, but keep standard structure
     const url = `${baseUrl}/${siteName}/__athena/update-json`;
     try {
       await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'swap-style', value: styleName }) });
