@@ -286,6 +286,31 @@ export class SiteController {
     }
 
     /**
+     * Get available visual styles from the boilerplate
+     */
+    getStyles() {
+        const stylesDir = path.join(this.configManager.get('paths.templates'), 'boilerplate/docked/css');
+        if (!fs.existsSync(stylesDir)) return [];
+        return fs.readdirSync(stylesDir)
+            .filter(f => f.endsWith('.css'))
+            .map(f => f.replace('.css', ''));
+    }
+
+    /**
+     * Get available layouts for a specific sitetype
+     */
+    getLayouts(siteType) {
+        // siteType can be "track/name"
+        const [track, name] = siteType.includes('/') ? siteType.split('/') : ['docked', siteType];
+        const webDir = path.join(this.configManager.get('paths.sitetypes'), track, name, 'web');
+        
+        if (!fs.existsSync(webDir)) return [];
+        return fs.readdirSync(webDir).filter(f => 
+            fs.statSync(path.join(webDir, f)).isDirectory() && !f.startsWith('.')
+        );
+    }
+
+    /**
      * Run a maintenance script (e.g. sync-deployment-status)
      */
     runScript(script, args) {

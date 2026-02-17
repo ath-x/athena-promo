@@ -40,6 +40,13 @@ export class ToolController {
     }
 
     /**
+     * Create a new sitetype based on an existing site's structure
+     */
+    createSitetypeFromSite(sourceSiteName, targetSitetypeName) {
+        return this.execService.runEngineScript('sitetype-from-site-generator.js', [sourceSiteName, targetSitetypeName]);
+    }
+
+    /**
      * Run a generic engine script
      */
     async runScript(script, args) {

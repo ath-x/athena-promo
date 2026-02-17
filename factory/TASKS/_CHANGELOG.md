@@ -3,19 +3,22 @@
 ## [7.9.5] - 2026-02-17
 ### Added
 - **Athena Data Hub**: Transformed the legacy "Projects" view into a centralized, 4-stage visual pipeline (Ingestion -> Extraction -> Core -> Cloud).
+- **Intelligent Flow (Pulsing Arrows)**: Added visual pulsing effects to the Data Hub pipeline to guide developers toward the logical next step.
+- **Blueprint Schema Editor**: Integrated a raw JSON editor in the Data Hub to allow direct modification of Sitetype blueprints.
+- **Web-Based Discovery Chat**: Implemented an interactive strategy interview within the dashboard, allowing the "Digital Strategist" to help define business goals.
 - **Data Gateway Modal**: Replaced the legacy "Sync" button with a unified gateway offering "Pull from Cloud", "Push to Cloud", and "Pull from local input folder".
-- **Smart Preview Orchestration**: The `SiteController` now automatically checks if a site's dev server is running, installs dependencies if missing, and spawns the process via `ProcessManager`.
-- **Client Onboarding Track**: Added a dedicated interactive roadmap for technical and commercial client onboarding via the Discovery Agent.
-- **Unified Terminologie**: Standardized the use of "Data Bron" (Data Source) for all input folders across the dashboard, code, and documentation to eliminate confusion with generated sites.
+- **Github Integration**: Added a dedicated `GithubController` to live-list repositories directly from the dashboard via `gh` CLI.
+- **Unified Terminology**: Standardized the use of "Data Bron" (Data Source) for all input folders to eliminate confusion.
 
 ### Changed
-- **AI Data Extractor (Parser)**: Rebranded the AI Content Parser to "AI Data Extractor" with explicit technical documentation on data source and destination paths.
-- **Unified Launcher**: Corrected root path calculation in `athena.js` and `athena-agent.js` to ensure reliable site discovery.
-- **Documentation Overhaul**: Updated all developer and client manuals to reflect the new "Data Source" terminology and Gateway workflow.
+- **Professional IDE Theme**: Overhauled the dashboard with a strak "Standard Navy Professional" dark theme, optimized for data density and long-term use.
+- **Site Media Mapper**: Rebranded the Media Visualizer and unified media tool naming across the entire system.
+- **Developer Documentation**: Overhauled `LAYOUT_ARCHITECT.md` and updated all manuals for v8.0 consistency.
 
 ### Fixed
-- **Dashboard API Consistency**: Added missing `/api/roadmaps` and `/api/todo` endpoints to ensure live roadmap tracking.
-- **Site Installation Reference**: Fixed a `ReferenceError` by importing `spawn` in the `SiteController`.
+- **Express 5 Compatibility**: Fixed a critical `PathError` crash in the dashboard caused by changes in wildcard routing in Express 5.2.
+- **Strategy Chat Logic**: Corrected AI response handling to treat strategist output as text instead of JSON.
+- **Smart Preview Orchestration**: Automated dependency checks and process spawning for site previews.
 
 ## [7.9.4] - 2026-02-15
 ### Added

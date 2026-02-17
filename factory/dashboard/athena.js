@@ -22,6 +22,7 @@ import { MarketingController } from '../5-engine/controllers/MarketingController
 import { SystemController } from '../5-engine/controllers/SystemController.js';
 import { ToolController } from '../5-engine/controllers/ToolController.js';
 import { ServerController } from '../5-engine/controllers/ServerController.js';
+import { GithubController } from '../5-engine/controllers/GithubController.js';
 
 import {
     generateDataStructureAPI,
@@ -51,6 +52,7 @@ const marketingCtrl = new MarketingController(configManager);
 const systemCtrl = new SystemController(configManager, lm, sm, execService);
 const toolCtrl = new ToolController(configManager, execService);
 const serverCtrl = new ServerController(configManager, pm, execService);
+const githubCtrl = new GithubController(configManager, execService);
 
 const app = express();
 const port = configManager.get('ports.dashboard') || 4001;
@@ -160,9 +162,25 @@ app.post('/api/projects/:id/upload', upload.array('files'), (req, res) => res.js
 app.post('/api/projects/:id/add-text', (req, res) => res.json(projectCtrl.addText(req.params.id, req.body.text, req.body.filename)));
 app.post('/api/projects/:id/save-urls', (req, res) => res.json(projectCtrl.saveUrls(req.params.id, req.body.urls)));
 app.post('/api/projects/:id/delete', async (req, res) => res.json(await projectCtrl.deleteProject(req.params.id, req.body)));
+app.get('/api/remote-repos', async (req, res) => {
+    try {
+        res.json(await githubCtrl.listRepositories());
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+app.post('/api/projects/remote-delete', async (req, res) => {
+    try {
+        res.json(await githubCtrl.deleteRepository(req.body.fullName));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- SITE API ---
 app.get('/api/sites', (req, res) => res.json(siteCtrl.list()));
+app.get('/api/styles', (req, res) => res.json(siteCtrl.getStyles()));
+app.get('/api/layouts/:track/:type', (req, res) => res.json(siteCtrl.getLayouts(`${req.params.track}/${req.params.type}`)));
 app.post('/api/create', async (req, res) => res.json(await siteCtrl.create(req.body)));
 app.post('/api/deploy', async (req, res) => res.json(await siteCtrl.deploy(req.body.projectName, req.body.commitMsg)));
 app.get('/api/sites/:id/theme-info', (req, res) => res.json(siteCtrl.getThemeInfo(req.params.id)));
@@ -189,6 +207,7 @@ app.post('/api/start-dock', async (req, res) => res.json(await serverCtrl.startD
 // --- SITETYPE API ---
 app.get('/api/sitetypes', (req, res) => res.json(getExistingSiteTypes()));
 app.get('/api/sitetype/existing', (req, res) => res.json({ success: true, sitetypes: getExistingSiteTypes() }));
+app.post('/api/sitetype/create-from-site', async (req, res) => res.json(await toolCtrl.createSitetypeFromSite(req.body.sourceSiteName, req.body.targetSitetypeName)));
 app.post('/api/sitetype/generate-structure', async (req, res) => res.json({ success: true, structure: await generateDataStructureAPI(req.body.businessDescription) }));
 app.post('/api/sitetype/generate-parser', async (req, res) => res.json({ success: true, instructions: await generateParserInstructionsAPI(req.body.table) }));
 app.post('/api/sitetype/generate-design', async (req, res) => res.json({ success: true, design: await generateDesignSuggestionAPI(req.body.businessDescription) }));
