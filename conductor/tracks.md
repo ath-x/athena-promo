@@ -42,6 +42,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Self-Healing Architecture (Audits & Auto-Prune)**
   *Link: [./tracks/self-healing-architecture/](./tracks/self-healing-architecture/)*
 
+- [x] **Track: Renaming Media Tools & Scripts (Terminology Standardization)**
+  *Link: [./tracks/rename-media-tools-20260217/](./tracks/rename-media-tools-20260217/)*
+
 ---
 
 ## Active & Pending Tracks

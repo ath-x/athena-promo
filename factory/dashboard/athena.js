@@ -176,6 +176,28 @@ app.get('/api/roadmaps', (req, res) => {
     }
 });
 
+// --- BLUEPRINT API ---
+app.get('/api/blueprints/:track/:name', (req, res) => {
+    const { track, name } = req.params;
+    const blueprintPath = path.join(root, 'factory/3-sitetypes', track, name, 'blueprint', `${name}.json`);
+    if (fs.existsSync(blueprintPath)) {
+        res.json(JSON.parse(fs.readFileSync(blueprintPath, 'utf8')));
+    } else {
+        res.status(404).json({ error: "Blueprint niet gevonden" });
+    }
+});
+
+app.post('/api/blueprints/:track/:name', (req, res) => {
+    const { track, name } = req.params;
+    const blueprintPath = path.join(root, 'factory/3-sitetypes', track, name, 'blueprint', `${name}.json`);
+    try {
+        fs.writeFileSync(blueprintPath, JSON.stringify(req.body, null, 2));
+        res.json({ success: true, message: "Blueprint succesvol opgeslagen." });
+    } catch (e) {
+        res.status(500).json({ error: "Kon blueprint niet opslaan: " + e.message });
+    }
+});
+
 app.get('/api/todo', (req, res) => {
     const todoPath = path.join(root, 'factory/TASKS/_TODO.md');
     if (fs.existsSync(todoPath)) {

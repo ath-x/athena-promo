@@ -748,6 +748,55 @@ async function confirmDeleteRepo(fullName) {
     }
 }
 
+// --- DATA HUB PIPELINE HELPERS ---
+let currentBlueprintType = null;
+let currentBlueprintTrack = null;
+
+async function openBlueprintModal(siteType) {
+    if (!siteType) return alert("Geen Sitetype gekoppeld aan dit project. Genereer eerst een site.");
+    
+    // siteType can be "track/name"
+    const [track, name] = siteType.includes('/') ? siteType.split('/') : ['docked', siteType];
+    currentBlueprintTrack = track;
+    currentBlueprintType = name;
+
+    document.getElementById('blueprint-name-display').innerText = siteType;
+    document.getElementById('blueprint-status').innerText = '';
+    const editor = document.getElementById('blueprint-json-editor');
+    editor.value = "📡 Laden...";
+
+    try {
+        const res = await fetch(`${API}/blueprints/${track}/${name}`);
+        const data = await res.json();
+        editor.value = JSON.stringify(data, null, 2);
+    } catch (e) {
+        editor.value = "❌ Fout bij laden blueprint: " + e.message;
+    }
+
+    openModal('blueprint-modal');
+}
+
+async function saveBlueprint() {
+    const editor = document.getElementById('blueprint-json-editor');
+    const status = document.getElementById('blueprint-status');
+    
+    try {
+        const data = JSON.parse(editor.value);
+        status.innerHTML = "⏳ Opslaan...";
+        
+        const res = await fetch(`${API}/blueprints/${currentBlueprintTrack}/${currentBlueprintType}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        status.innerHTML = result.success ? `<span class="success">✅ ${result.message}</span>` : `<span class="error">❌ ${result.error}</span>`;
+        if (result.success) setTimeout(() => closeModal('blueprint-modal'), 1500);
+    } catch (e) {
+        status.innerHTML = `<span class="error">❌ Ongeldige JSON: ${e.message}</span>`;
+    }
+}
+
 async function loadProjects() {
     const projects = await fetchJSON('/projects') || [];
     const sites = await fetchJSON('/sites') || [];
@@ -766,9 +815,14 @@ async function loadProjects() {
         // Data status checks
         const files = await fetchJSON(`/projects/${project}/files`) || [];
         const hasInput = files.length > 0;
-        const hasTsv = files.some(f => f.toLowerCase().includes('.tsv')) || false; // This check might need more backend info, but let's assume for now
+        const hasTsv = files.some(f => f.toLowerCase().includes('.tsv')) || false;
         const hasSite = !!site;
         const hasSheet = site && site.sheetUrl;
+
+        // Intelligent Flow Logic
+        const pulse1to2 = hasInput && !hasTsv;
+        const pulse2to3 = hasTsv && hasSite;
+        const pulse3to4 = hasSite && !hasSheet;
 
         const row = document.createElement('div');
         row.className = 'pipeline-row';
@@ -803,22 +857,25 @@ async function loadProjects() {
                     </div>
                 </div>
 
-                <div class="bridge-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                <div class="bridge-arrow ${pulse1to2 ? 'pulse' : ''}"><i class="fa-solid fa-chevron-right"></i></div>
 
                 <!-- STEP 2: STRUCTUUR -->
-                <div class="step-box-hub">
+                <div class="step-box-hub ${hasTsv ? 'active' : ''}">
                     <h5><i class="fa-solid fa-robot"></i> 2. Structuur</h5>
                     <div class="step-content-info">
-                        <span class="muted">TSV Output</span>
+                        ${hasTsv ? `<span class="success">TSV Gereed</span>` : '<span class="muted">Ruwe Data</span>'}
                     </div>
                     <div class="step-actions">
-                        <button onclick="openParserModal('${project}')" class="mini-action-btn" style="background: var(--purple); color: #fff;">
+                        <button onclick="openParserModal('${project}')" class="mini-action-btn" style="background: var(--purple); color: #fff;" title="AI Data Extractor (Parser)">
                             <i class="fa-solid fa-wand-sparkles"></i> EXTRACT
+                        </button>
+                        <button onclick="openBlueprintModal('${site?.siteType || ''}')" class="mini-action-btn" title="Edit Blueprint Schema">
+                            <i class="fa-solid fa-code"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="bridge-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                <div class="bridge-arrow ${pulse2to3 ? 'pulse' : ''}"><i class="fa-solid fa-chevron-right"></i></div>
 
                 <!-- STEP 3: SITE CORE -->
                 <div class="step-box-hub ${hasSite ? 'active' : ''}">
@@ -827,13 +884,13 @@ async function loadProjects() {
                         ${hasSite ? `<span class="accent">Site Gekoppeld</span>` : '<span class="muted">Geen Site</span>'}
                     </div>
                     <div class="step-actions">
-                        <button onclick="injectTsvGatewayDirect('${project}')" class="mini-action-btn" ${!hasSite ? 'disabled' : ''} title="Pull from Input Folder">
+                        <button onclick="injectTsvGatewayDirect('${project}')" class="mini-action-btn" ${!hasSite ? 'disabled' : ''} title="Pull from local input folder">
                             <i class="fa-solid fa-bolt"></i> PULL
                         </button>
                     </div>
                 </div>
 
-                <div class="bridge-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                <div class="bridge-arrow ${pulse3to4 ? 'pulse' : ''}"><i class="fa-solid fa-chevron-right"></i></div>
 
                 <!-- STEP 4: CLOUD -->
                 <div class="step-box-hub ${hasSheet ? 'active' : ''}">
@@ -2383,11 +2440,11 @@ window.copyToClipboard = (text) => {
 
 async function openToolModal(tool) {
     currentTool = tool;
-    const titles = { 'data-injector': 'Pull from local input folder', 'image-gen': 'AI Art Director', 'media-fetcher': '📸 Media Fetcher', 'ai-parser': '🤖 AI Data Extractor (Parser)' };
+    const titles = { 'data-injector': 'Pull from local input folder', 'image-gen': 'Site AI Image Prompt Generator', 'media-fetcher': '📸 Site Media Fetcher', 'ai-parser': '🤖 AI Data Extractor (Parser)' };
     const descriptions = {
         'data-injector': 'Importeert lokale TSV-bestanden uit de "input/[project]/tsv-data/" map en injecteert deze in de JSON-architectuur van de site.',
-        'image-gen': 'Genereert cinematische Midjourney/DALL-E prompts op basis van de site-context in de input folder.',
-        'media-fetcher': 'Scavengt rechtenvrije assets van Pexels/Unsplash op basis van metadata-keywords.',
+        'image-gen': 'Analyseert de context van de data bron (zoals productbeschrijvingen of business vertical) en genereert cinematische prompts voor tools zoals Midjourney of DALL-E. Hiermee creëer je visuals die exact passen bij de sfeer van de site.',
+        'media-fetcher': 'Scant rechtenvrije platforms (Pexels/Unsplash) op basis van de trefwoorden in je data bron en downloadt automatisch passende afbeeldingen naar de lokale media-map.',
         'ai-parser': 'Verwerkt ongestructureerde input (scrapes/text) naar gestructureerde TSV-bestanden in de "tsv-data/" map, gemapt op de geselecteerde SiteType blueprint.'
     };
 
@@ -2460,20 +2517,20 @@ async function generateSitesOverview() {
 
 const TOOL_INFO = {
     'layout-architect': {
-        title: 'Layout Architect',
-        body: 'Een visuele editor waarmee je datavelden uit je Google Sheet (zoals titels en teksten) kunt koppelen aan specifieke plekken op je website. Je ziet direct resultaat in een preview venster.'
+        title: 'Sitetype Visual Layout Mapper',
+        body: 'Vertaalt een database-blueprint naar een functionele React/Tailwind frontend.\n\n• Bron: factory/3-sitetypes/[type]/blueprint/\n• Doel: factory/3-sitetypes/[type]/web/[layout]/\n\nDeze tool mapt logische datatabellen naar visuele UI-secties. Het genereert de broncode (App.jsx, Header, Section) die de basis vormt voor elke site van dit type. Je kunt kiezen tussen AI-generatie voor unieke designs of de Standard-mode voor consistente Athena-componenten.'
     },
     'image-gen': {
-        title: 'AI Image Prompt Generator',
-        body: 'Maakt gebruik van AI om cinematische prompts te genereren voor afbeeldingen op basis van de context van de data bron. Deze prompts kunnen direct gebruikt worden in tools als Midjourney of DALL-E.'
+        title: 'Site AI Image Prompt Generator',
+        body: 'Deze tool gebruikt AI om de unieke context van je data bron (zoals bedrijfsactiviteiten, producten en sfeer) te vertalen naar professionele beeld-prompts. \n\n• Hoe het werkt: De AI scant je verzamelde teksten, identificeert de visuele stijl van je SiteType, en genereert gedetailleerde instructies voor Midjourney, DALL-E of Stable Diffusion.\n• Resultaat: Beeldmateriaal dat naadloos aansluit bij de content van de site.'
     },
     'media-fetcher': {
-        title: 'Media Fetcher',
-        body: 'Zoekt automatisch naar relevante foto\'s op rechtenvrije platforms zoals Pexels en Unsplash. Ideaal om snel een nieuwe site te vullen met kwalitatieve beelden op basis van data bron keywords.'
+        title: 'Site Media Fetcher',
+        body: 'Automatiseert de zoektocht naar passend beeldmateriaal op rechtenvrije platforms.\n\n• Hoe het werkt: Op basis van de belangrijkste zoekwoorden in je data bron zoekt de tool op Pexels en Unsplash naar foto\'s van hoge kwaliteit.\n• Resultaat: Directe download naar je lokale project-map, klaar voor gebruik in de site.'
     },
     'media-visualizer': {
-        title: 'Media Visualizer',
-        body: 'Een visuele web-tool om afbeeldingen naar de juiste "slots" op je website te slepen. Je kunt afbeeldingen uploaden of koppelen aan de datastructuur van je site. Script: media-visualizer.js'
+        title: 'Site Media Mapper',
+        body: 'Een visuele web-tool om afbeeldingen naar de juiste "slots" op je website te slepen. \n\n• Hoe het werkt: Je ziet een live preview van de site-componenten en sleept simpelweg afbeeldingen naar de gewenste plek. \n• Resultaat: De tool werkt automatisch de lokale JSON-data bij met de juiste bestandspaden. Script: media-mapper.js'
     },
     'data-injector': {
         title: 'Pull from local input folder',

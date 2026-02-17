@@ -428,8 +428,8 @@
                             <i class="fa-solid fa-compass-drafting accent"></i>
                             <span class="badge">Visual Wizard</span>
                         </div>
-                        <h4>Layout Architect</h4>
-                        <p>Visueel mappen van datavelden.</p>
+                        <h4>Sitetype Visual Layout Mapper</h4>
+                        <p>Ontwerp de visuele mal voor een Sitetype.</p>
                     </div>
 
                     <div class="tool-card" onclick="openToolServer('media')">
@@ -438,7 +438,7 @@
                             <i class="fa-solid fa-images accent"></i>
                             <span class="badge">Visual Wizard</span>
                         </div>
-                        <h4>Media Visualizer</h4>
+                        <h4>Site Media Mapper</h4>
                         <p>Visueel media koppelen via drag-and-drop.</p>
                     </div>
 
@@ -449,7 +449,7 @@
                             <i class="fa-solid fa-camera-retro pink"></i>
                             <span class="badge pink-badge">Media</span>
                         </div>
-                        <h4>Media Fetcher</h4>
+                        <h4>Site Media Fetcher</h4>
                         <p>Haal foto's van Pexels/Unsplash.</p>
                     </div>
 
@@ -459,7 +459,7 @@
                             <i class="fa-solid fa-wand-magic-sparkles orange"></i>
                             <span class="badge orange-badge">AI</span>
                         </div>
-                        <h4>AI Image Prompt Generator</h4>
+                        <h4>Site AI Image Prompt Generator</h4>
                         <p>Genereer cinematische prompts.</p>
                     </div>
 
@@ -1482,6 +1482,30 @@
             </div>
 
             <div id="gateway-log" class="log-output hidden mt-20"></div>
+        </div>
+    </div>
+
+    <!-- Blueprint Editor Modal -->
+    <div id="blueprint-modal" class="modal hidden">
+        <div class="modal-content large">
+            <span class="close-btn" onclick="closeModal('blueprint-modal')">&times;</span>
+            <h3>🛠️ Blueprint Schema Editor</h3>
+            <p style="margin-bottom: 15px;">Sitetype: <strong id="blueprint-name-display" class="accent"></strong></p>
+
+            <div class="info-box mb-15">
+                <p class="small">Pas hier de tabel-structuur en parser-instructies van de blauwdruk aan. Dit heeft direct invloed op toekomstige data-extracties voor alle sites van dit type.</p>
+            </div>
+
+            <textarea id="blueprint-json-editor" 
+                style="width: 100%; height: 450px; background: #000; color: #4ade80; font-family: 'Fira Code', monospace; padding: 15px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem; tab-size: 2;"></textarea>
+
+            <div class="modal-footer mt-20" style="display: flex; gap: 15px;">
+                <button onclick="closeModal('blueprint-modal')" class="secondary-btn flex-1">Annuleren</button>
+                <button onclick="saveBlueprint()" class="primary-btn flex-1" style="background: var(--purple);">
+                    <i class="fa-solid fa-save"></i> Wijzigingen Opslaan
+                </button>
+            </div>
+            <div id="blueprint-status" class="status-msg mt-10"></div>
         </div>
     </div>
 

@@ -28,7 +28,7 @@ Then open: `http://localhost:5001`
 ## 4. Visual Tools
 On development machines, these can be started manually:
 - **Layout Architect:** `node 5-engine/layout-visualizer.js` (Port 5003)
-- **Media Mapper:** `node 5-engine/media-visualizer.js` (Port 5004)
+- **Media Mapper:** `node 5-engine/media-mapper.js` (Port 5004)
 
 ## 5. Power User CLI Workflow
 For rapid generation and maintenance without the dashboard:

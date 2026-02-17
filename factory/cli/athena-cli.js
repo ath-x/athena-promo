@@ -28,7 +28,7 @@ const SCRIPTS = {
     SHEET_TO_TSV: '../5-engine/sync-sheet-to-tsv.js',
     SHEET_TO_JSON: '../5-engine/sync-sheet-to-json.js',
     IMAGE_PROMPTS: '../5-engine/generate-image-prompts.js',
-    MEDIA_MAPPER: './media-mapper.js',
+    MEDIA_MAPPER: './media-mapper-cli.js',
     CLEANUP_WIZARD: '../5-engine/cleanup-wizard.js'
 };
 

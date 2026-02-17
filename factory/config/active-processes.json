@@ -1,9 +1,16 @@
 {
+  "5003": {
+    "pid": 23251,
+    "id": "layout-editor",
+    "type": "editor",
+    "startTime": "2026-02-17T16:45:03.587Z",
+    "logFile": "/home/kareltestspecial/ath/athena-x/factory/output/logs/layout-editor-editor.log"
+  },
   "5004": {
-    "pid": 19692,
+    "pid": 23528,
     "id": "media-mapper",
     "type": "editor",
-    "startTime": "2026-02-17T15:58:49.307Z",
+    "startTime": "2026-02-17T16:54:52.005Z",
     "logFile": "/home/kareltestspecial/ath/athena-x/factory/output/logs/media-mapper-editor.log"
   },
   "6041": {

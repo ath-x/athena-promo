@@ -11,11 +11,24 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { loadEnv } from './env-loader.js';
-import { generateStandardComponents } from './logic/standard-layout-generator.js';
+import { generateSectionComponent } from './logic/standard-layout-generator.js';
+
+/**
+ * Fallback generator for standard components when AI is not used.
+ */
+function generateStandardComponents(sitetype, layoutName, mapping) {
+    return {
+        "App.jsx": "import React from 'react';\nimport Header from './components/Header';\nimport Section from './components/Section';\n\nconst App = ({ data }) => (\n  <div className=\"min-h-screen bg-white\">\n    <Header data={data} />\n    <main>\n      <Section data={data} />\n    </main>\n  </div>\n);\n\nexport default App;",
+        "Header.jsx": "import React from 'react';\n\nconst Header = ({ data }) => {\n  const settings = data.site_settings?.[0] || {};\n  return (\n    <header className=\"p-6 flex justify-between items-center border-b\">\n      <h1 className=\"text-xl font-bold\">{settings.site_name || 'Athena Site'}</h1>\n    </header>\n  );\n};\n\nexport default Header;",
+        "Section.jsx": generateSectionComponent({ data_structure: mapping.sections.map(s => ({ table_name: s })) }, 'docked'),
+        "index.css": "@import \"tailwindcss\";\n\n@theme {\n  --color-accent: #007acc;\n}"
+    };
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+const siteTypesDir = path.join(root, '3-sitetypes');
 
 // Global State
 let selectedSitetype = null;
@@ -76,7 +89,7 @@ async function generateComponents(sitetype, layoutName, mapping, blueprint, pref
         // Gemini 3 handling: find text part
         const parts = response.candidates?.[0]?.content?.parts || [];
         const textPart = parts.find(p => p.text);
-        const text = textPart ? textPart.text : response.text();
+        const text = textPart ? textPart.text : (response.text ? response.text() : "");
         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
         return JSON.parse(cleanJson);
     } catch (error) {
@@ -92,31 +105,40 @@ async function startVisualizer() {
     console.log("🎨 Athena Visual Layout Editor - Server Started");
     console.log("=================================================");
 
-app.get('/api/sitetypes', async (req, res) => {
-    try {
-        const siteTypesDir = path.join(root, '3-sitetypes');
-        if (!existsSync(siteTypesDir)) return res.json([]);
-        
-        const types = (await fs.readdir(siteTypesDir)).filter(f => existsSync(path.join(siteTypesDir, f, 'blueprint')));
     const app = express();
-    const port = process.env.LAYOUT_EDITOR_PORT || 3030;
+    const port = process.env.LAYOUT_EDITOR_PORT || 5003;
     app.use(express.json());
 
     // Serve Editor UI
     app.get('/', async (req, res) => {
-        const html = await fs.readFile(path.join(__dirname, 'ui/layout-editor.html'), 'utf8');
-        res.send(html);
+        try {
+            const html = await fs.readFile(path.join(__dirname, 'ui/layout-editor.html'), 'utf8');
+            res.send(html);
+        } catch (e) {
+            res.status(500).send("Editor UI niet gevonden. Zorg dat ui/layout-editor.html bestaat.");
+        }
     });
 
-    // API: List Available Types
+    // API: List Available Types (Scans both tracks)
     app.get('/api/types', async (req, res) => {
         try {
-            const types = (await fs.readdir(siteTypesDir)).filter(f => existsSync(path.join(siteTypesDir, f, 'blueprint')));
-            res.json(types);
-        } catch (e) { res.json([]); }
+            const tracks = ['docked', 'autonomous'];
+            let allTypes = [];
+            for (const track of tracks) {
+                const trackDir = path.join(siteTypesDir, track);
+                if (existsSync(trackDir)) {
+                    const types = (await fs.readdir(trackDir)).filter(f => existsSync(path.join(trackDir, f, 'blueprint')));
+                    allTypes = [...allTypes, ...types.map(t => `${track}/${t}`)];
+                }
+            }
+            res.json(allTypes);
+        } catch (e) { 
+            console.error("Fout bij ophalen types:", e);
+            res.json([]); 
+        }
     });
 
-    // API: Set Type (New!)
+    // API: Set Type
     app.post('/api/set-type', async (req, res) => {
         const { type } = req.body;
         if (existsSync(path.join(siteTypesDir, type))) {
@@ -130,23 +152,24 @@ app.get('/api/sitetypes', async (req, res) => {
 
     // API: Get Blueprint
     app.get('/api/blueprint', async (req, res) => {
-        // If no type selected, return error so frontend prompts for it
         if (!selectedSitetype) {
             return res.status(400).json({ error: "NO_TYPE_SELECTED" });
         }
 
-        const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${selectedSitetype}.json`);
+        const typeName = selectedSitetype.split('/').pop();
+        const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${typeName}.json`);
         try {
             const blueprint = JSON.parse(await fs.readFile(blueprintPath, 'utf8'));
             const layoutsDir = path.join(siteTypesDir, selectedSitetype, 'web');
             let existingLayouts = [];
             if (existsSync(layoutsDir)) {
-                existingLayouts = (await fs.readdir(layoutsDir)).filter(f => {
+                existingLayouts = (await fs.readdir(layoutsDir)).filter(async (f) => {
                     return existsSync(path.join(layoutsDir, f, 'App.jsx'));
                 });
             }
             res.json({ sitetype: selectedSitetype, blueprint, existingLayouts });
         } catch (e) {
+            console.error("Fout bij laden blueprint:", e);
             res.status(500).json({ error: "Blueprint not found" });
         }
     });
@@ -155,16 +178,11 @@ app.get('/api/sitetypes', async (req, res) => {
     app.post('/api/suggest-mapping', async (req, res) => {
         if (!selectedSitetype) return res.status(400).send("No type selected");
         
-        // ... (Code continues, uses selectedSitetype) ...
-        // Re-read blueprint here just to be safe or store it in state
-        const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${selectedSitetype}.json`);
-        const blueprint = JSON.parse(await fs.readFile(blueprintPath, 'utf8'));
-
-        // AI Logic same as before...
-        // For brevity, skipping full implementation in this write_file, assuming import works.
-        // ACTUALLY, I need to include the AI logic here or it breaks.
-        
         try {
+            const typeName = selectedSitetype.split('/').pop();
+            const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${typeName}.json`);
+            const blueprint = JSON.parse(await fs.readFile(blueprintPath, 'utf8'));
+
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
             const modelName = process.env.AI_MODEL_FRONTEND_ARCHITECT || process.env.AI_MODEL_DEFAULT || "gemini-flash-latest";
             const model = genAI.getGenerativeModel({ model: modelName });
@@ -180,11 +198,13 @@ app.get('/api/sitetypes', async (req, res) => {
             const result = await model.generateContent(prompt);
             const response = await result.response;
             
-            // Gemini 3 handling: find text part
             const parts = response.candidates?.[0]?.content?.parts || [];
             const textPart = parts.find(p => p.text);
-            const text = textPart ? textPart.text : response.text();
+            const text = textPart ? textPart.text : (response.text ? response.text() : "");
+            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            res.json(JSON.parse(cleanJson));
         } catch (error) {
+            console.error("Suggestie fout:", error);
             res.status(500).json({ error: "Kon geen suggestie genereren." });
         }
     });
@@ -194,7 +214,8 @@ app.get('/api/sitetypes', async (req, res) => {
         if (!selectedSitetype) return res.status(400).send("No type selected");
 
         const { layoutName, mapping, preferences, mode } = req.body;
-        const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${selectedSitetype}.json`);
+        const typeName = selectedSitetype.split('/').pop();
+        const blueprintPath = path.join(siteTypesDir, selectedSitetype, 'blueprint', `${typeName}.json`);
         const blueprint = JSON.parse(await fs.readFile(blueprintPath, 'utf8'));
 
         let components = null;
@@ -210,10 +231,9 @@ app.get('/api/sitetypes', async (req, res) => {
                 const result = await model.generateContent(stylePrompt);
                 const response = await result.response;
                 
-                // Gemini 3 handling: find text part
                 const parts = response.candidates?.[0]?.content?.parts || [];
                 const textPart = parts.find(p => p.text);
-                const text = textPart ? textPart.text : response.text();
+                const text = textPart ? textPart.text : (response.text ? response.text() : "");
                 
                 const aiCss = text.replace(/```css/g, '').replace(/```/g, '').trim();
                 components = { ...baseComponents, "index.css": aiCss };
@@ -232,8 +252,9 @@ app.get('/api/sitetypes', async (req, res) => {
             await fs.writeFile(path.join(targetDir, 'components', 'Header.jsx'), components['Header.jsx'] || (components.components ? components.components['Header.jsx'] : ''));
             await fs.writeFile(path.join(targetDir, 'components', 'Section.jsx'), components['Section.jsx'] || (components.components ? components.components['Section.jsx'] : ''));
 
-            if (!existsSync(path.join(targetDir, 'main.jsx'))) {
-                const boilerplateMain = await fs.readFile(path.join(root, '2-templates/boilerplate/SPA/main.jsx'), 'utf8');
+            // Voor SPA tracks, voeg main.jsx toe indien nodig
+            if (selectedSitetype.startsWith('docked') && !existsSync(path.join(targetDir, 'main.jsx'))) {
+                const boilerplateMain = await fs.readFile(path.join(root, '2-templates/boilerplate/docked/main.jsx'), 'utf8');
                 await fs.writeFile(path.join(targetDir, 'main.jsx'), boilerplateMain);
             }
             res.json({ success: true });

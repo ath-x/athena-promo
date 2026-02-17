@@ -106,7 +106,17 @@ export class SiteController {
                 if (firstKey) sheetData = json[firstKey].editUrl;
             }
 
-            return { name: site, status, deployData, sheetUrl: sheetData, isDataEmpty };
+            // Get SiteType from athena-config.json
+            let siteType = null;
+            const configPath = path.join(sitePath, 'athena-config.json');
+            if (fs.existsSync(configPath)) {
+                try {
+                    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                    siteType = config.siteType;
+                } catch (e) { }
+            }
+
+            return { name: site, status, deployData, sheetUrl: sheetData, isDataEmpty, siteType };
         });
     }
 

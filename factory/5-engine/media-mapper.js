@@ -1,5 +1,5 @@
 /**
- * @file media-visualizer.js
+ * @file media-mapper.js
  * @description Web-based tool voor het visueel koppelen van media aan data.
  */
 
