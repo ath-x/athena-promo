@@ -1,8 +1,7 @@
 import React from 'react';
-import { useDisplayConfig } from './DisplayConfigContext';
 
 /**
- * EditableLink (Docked Track)
+ * EditableLink (v7.9.2 - Docked Track)
  */
 export default function EditableLink({ 
   url, 
@@ -16,19 +15,13 @@ export default function EditableLink({
   as: Tag = 'a',
   ...props 
 }) {
-  const { isFieldVisible } = useDisplayConfig() || {};
   const isDev = import.meta.env.DEV;
   const binding = cmsBind || { file: table, index: id, key: field };
 
-  // v7.8.7: Support object-based link data (label + url)
+  // Support object-based link data (label + url)
   const isObjectValue = typeof url === 'object' && url !== null;
   const finalLabel = isObjectValue ? (url.label || label) : label;
   const finalUrl = isObjectValue ? (url.url || url) : url;
-
-  // Visibility Check
-  if (isFieldVisible && !isFieldVisible(binding.file, binding.key)) {
-    return null;
-  }
 
   const actualUrl = (finalUrl && !finalUrl.startsWith('http') && !finalUrl.startsWith('/') && !finalUrl.startsWith('#'))
     ? `${import.meta.env.BASE_URL}${finalUrl}`.replace(/\/+/g, '/')
@@ -50,25 +43,18 @@ export default function EditableLink({
     key: binding.key
   });
 
-  const handleClick = (e) => {
-    if (isDev && !e.shiftKey) {
-      e.preventDefault();
-      // Click logic is handled by data-dock-bind and the Dock's event listener
-    } else if (props.onClick) {
-      props.onClick(e);
-    }
-  };
-
   return (
     <Tag
       href={Tag === 'a' ? actualUrl : undefined}
       data-dock-bind={dockBind}
       data-dock-type="link"
-      data-dock-type="link"
       className={`${className} cursor-pointer hover:ring-2 hover:ring-blue-400/40 rounded-sm transition-all`}
-      title={`Klik om "${binding.key}" te bewerken in de Dock (Shift+Klik om actie uit te voeren)`}
+      title={`Klik om "${binding.key}" te bewerken in de Dock`}
       {...props}
-      onClick={handleClick}
+      onClick={(e) => {
+        if (!e.shiftKey) e.preventDefault();
+        if (props.onClick) props.onClick(e);
+      }}
     >
       {content}
     </Tag>

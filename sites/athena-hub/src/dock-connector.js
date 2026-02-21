@@ -156,6 +156,37 @@
         }
     });
 
+    // Handle clicks for editing
+    window.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-dock-bind]');
+        if (el && !e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            const binding = JSON.parse(el.getAttribute('data-dock-bind'));
+            const dockType = el.getAttribute('data-dock-type');
+            
+            // Get current value
+            let currentValue = el.innerText;
+            if (dockType === 'media') {
+                const mediaEl = el.tagName === 'IMG' ? el : el.querySelector('img, video');
+                currentValue = mediaEl ? mediaEl.getAttribute('src').split('/').pop() : '';
+            } else if (dockType === 'link') {
+                currentValue = {
+                    label: el.innerText,
+                    url: el.getAttribute('href') || el.getAttribute('data-dock-url') || ''
+                };
+            }
+
+            window.parent.postMessage({
+                type: 'SITE_CLICK',
+                binding,
+                dockType,
+                currentValue
+            }, '*');
+        }
+    }, true);
+
+
     if (document.readyState === 'complete') setTimeout(notifyDock, 1000);
     else window.addEventListener('load', () => setTimeout(notifyDock, 1000));
 
