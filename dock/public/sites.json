@@ -3,19 +3,179 @@
     "id": "jets-archive",
     "name": "jets-archive",
     "siteType": "jets-type",
-    "generatedAt": "2026-02-27T10:00:00.000Z",
+    "generatedAt": "2026-02-28T18:21:16.712Z",
     "governance_mode": "dev-mode",
     "repoUrl": "https://github.com/athena-cms-factory/jets-archive",
     "liveUrl": "https://athena-cms-factory.github.io/jets-archive",
     "port": 6225
   },
   {
+    "id": "cloud-architects-glassmorphism",
+    "name": "cloud-architects-glassmorphism",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:43.641Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5287
+  },
+  {
+    "id": "cloud-architects-cyberpunk",
+    "name": "cloud-architects-cyberpunk",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:43.623Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5229
+  },
+  {
+    "id": "pure-relaxation-nature",
+    "name": "pure-relaxation-nature",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:40:43.517Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5535
+  },
+  {
+    "id": "pure-relaxation-glassmorphism",
+    "name": "pure-relaxation-glassmorphism",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:40:43.506Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5484
+  },
+  {
+    "id": "code-crafters-bold",
+    "name": "code-crafters-bold",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:05.305Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5434
+  },
+  {
+    "id": "code-crafters-modern-dark",
+    "name": "code-crafters-modern-dark",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:05.294Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6086
+  },
+  {
+    "id": "urban-oasis-warm",
+    "name": "urban-oasis-warm",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:40:05.208Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6483
+  },
+  {
+    "id": "urban-oasis-classic",
+    "name": "urban-oasis-classic",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:40:05.197Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6249
+  },
+  {
+    "id": "cloud-architects-corporate",
+    "name": "cloud-architects-corporate",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:05.124Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5608
+  },
+  {
+    "id": "cloud-architects-bold",
+    "name": "cloud-architects-bold",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:40:05.112Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5610
+  },
+  {
+    "id": "pure-relaxation-warm",
+    "name": "pure-relaxation-warm",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:40:05.043Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6037
+  },
+  {
+    "id": "code-crafters",
+    "name": "code-crafters",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:36:12.522Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5834
+  },
+  {
+    "id": "urban-oasis",
+    "name": "urban-oasis",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:36:12.471Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6312
+  },
+  {
+    "id": "cloud-architects",
+    "name": "cloud-architects",
+    "siteType": "tech-consultancy",
+    "generatedAt": "2026-02-27T18:36:12.401Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 5591
+  },
+  {
+    "id": "pure-relaxation",
+    "name": "pure-relaxation",
+    "siteType": "wellness-spa",
+    "generatedAt": "2026-02-27T18:36:12.231Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 6390
+  },
+  {
+    "id": "ai-consultant-smartbe",
+    "name": "ai-consultant-smartbe",
+    "siteType": "portfolio-kbm",
+    "generatedAt": "2026-02-26T22:12:42.099Z",
+    "governance_mode": "dev-mode",
+    "repoUrl": null,
+    "liveUrl": null,
+    "port": 3000
+  },
+  {
     "id": "portfolio-kbm",
     "name": "portfolio-kbm",
     "siteType": "portfolio-kbm",
-    "generatedAt": "2026-02-26T21:05:00.000Z",
+    "generatedAt": "2026-02-26T19:03:20.978Z",
     "governance_mode": "dev-mode",
-    "repoUrl": "https://github.com/KarelTestSpecial/portfolio-kbm",
+    "repoUrl": null,
     "liveUrl": null,
     "port": 6107
   },
@@ -28,16 +188,6 @@
     "repoUrl": "https://github.com/athena-cms-factory/athena-promo",
     "liveUrl": "https://athena-cms-factory.github.io/athena-promo",
     "port": 5812
-  },
-  {
-    "id": "test-upgrade-site",
-    "name": "test-upgrade-site",
-    "siteType": "basic-dock-type",
-    "generatedAt": "2026-02-12T21:03:02.877Z",
-    "governance_mode": "dev-mode",
-    "repoUrl": null,
-    "liveUrl": null,
-    "port": 6009
   },
   {
     "id": "demo-consultant-classic",
@@ -175,8 +325,8 @@
     "siteType": "mpa-hydra",
     "generatedAt": "2026-01-28T17:40:25.598Z",
     "governance_mode": "dev-mode",
-    "repoUrl": null,
-    "liveUrl": null,
+    "repoUrl": "https://github.com/athena-cms-factory/fpc-gent-site",
+    "liveUrl": "https://athena-cms-factory.github.io/fpc-gent-site",
     "port": 6103
   },
   {

@@ -182,14 +182,26 @@ app.get('/api/data', (req, res) => {
 
     // 2. Haal data op (MPA-compatible via recursief zoeken)
     let tables = {};
+    const EXCLUDED_TABLES = [
+        'site_settings', 
+        'style_bindings', 
+        '_system', 
+        '_links_config', 
+        'layout_settings', 
+        'section_order', 
+        'display_config',
+        'all_data' // v8 aggregated file
+    ];
+
     if (fs.existsSync(dataDir)) {
         const jsonFiles = getAllJsonFiles(dataDir);
         for (const filePath of jsonFiles) {
             try {
-                // Table name becomes relative path from src/data without .json 
-                // bijv: pages/home, over-ons, etc.
                 const relativePath = path.relative(dataDir, filePath);
                 const tableName = relativePath.replace(/\\/g, '/').replace('.json', '');
+
+                // Filter out system tables
+                if (EXCLUDED_TABLES.some(t => tableName.endsWith(t))) continue;
 
                 const raw = fs.readFileSync(filePath, 'utf8');
                 let parsed = JSON.parse(raw);

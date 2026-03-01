@@ -42,7 +42,7 @@
       "title": "",
       "subtitle": "",
       "cta_text": "Bekijk de Demo's",
-      "image": "hero-athenahub-1-1770366162431-1770366323024.png"
+      "image": "hero-athenahub-1-1770366162431.webp"
     }
   ],
   "innovatie": [],
@@ -279,7 +279,7 @@
       "header_height": 68,
       "header_transparent": false,
       "header_show_button": true,
-      "content_top_offset": "-100",
+      "content_top_offset": "38",
       "header_visible": true,
       "header_show_title": true,
       "header_show_logo": true,
@@ -292,14 +292,7 @@
   ],
   "style_bindings": {
     "site_name": "athena-hub",
-    "hero:0:image": {
-      "bold": false,
-      "italic": false,
-      "fontSize": "16px",
-      "textAlign": "left",
-      "fontFamily": "sans-serif",
-      "textShadow": false
-    },
+    "hero:0:image": "F7136Iz0-1770395616777.jpeg",
     "hero:0:title": {
       "bold": false,
       "italic": false,

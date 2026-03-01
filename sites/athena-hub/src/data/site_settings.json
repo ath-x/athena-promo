@@ -10,7 +10,7 @@
     "header_height": 68,
     "header_transparent": false,
     "header_show_button": true,
-    "content_top_offset": "-100",
+    "content_top_offset": "38",
     "header_visible": true,
     "header_show_title": true,
     "header_show_logo": true,

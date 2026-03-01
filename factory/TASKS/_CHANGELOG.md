@@ -529,3 +529,4 @@
 ### Removed
 - Obsolete global `/shared` and `/css` template directories.
 ### v7.9.8 (2026-03-01)\n- NEW: Dock-to-Disk persistence engine for live editing.\n- NEW: Data Aggregation (all_data.json) for 45%+ LCP improvement.\n- NEW: Modular Section architecture standard.
+- v7.9.9 (2026-03-01): Added metadata filters to Visual Media Mapper. Improved Dock-to-Site bridge with sessionStorage persistence and immutable state updates.

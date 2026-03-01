@@ -2,7 +2,7 @@
 
 ## Phase 1: Preparation and Baseline Analysis
 - [~] Task: Audit Sites Sequentially (Alphabetical Order)
-      - [x] Start with Site #1: `athena-hub`. Perform baseline Lighthouse audits and architectural review.
+      - [x] Start with Site #1: `athena-hub` (Full Audit - [x] Start with Site #1: `athena-hub` Stability Complete). Perform baseline Lighthouse audits and architectural review.
       - [ ] Record baseline scores and identified bottlenecks in `performance_report.md`.
       - [ ] Move through the list: `athena-pro`, `athena-promo`, etc.- [ ] Task: Audit Base Templates
     - [ ] Review `factory/2-templates/` for redundant JS/CSS and resource-intensive patterns.
