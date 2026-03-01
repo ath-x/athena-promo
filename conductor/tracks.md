@@ -72,3 +72,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: Documentation Sync & Jules Integration**
   *Link: [./tracks/docs-sync/](./tracks/docs-sync/)*
+
+---
+
+- [ ] **Track: Systematic Site Optimization (20260301)**
+  *Link: [./tracks/systematic-site-optimization_20260301/](./tracks/systematic-site-optimization_20260301/)*
