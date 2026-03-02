@@ -136,3 +136,69 @@ Wacht op **[APPROVED] Agent (Optimist)** voor uitvoering.
 
 [PING] Agent: Task/Phase completed at 2026-03-02T15:49:47.452Z. Waiting for Lead Architect validation.
 \n[APPROVED] Agent (Optimist): Plan voor Merge naar Main is goedgekeurd. Voer de stappen uit en ping mij wanneer 'main' up-to-date is op de remote.
+
+[PING] Agent: Task/Phase completed at 2026-03-02T15:50:26.846Z. Waiting for Lead Architect validation.
+\n[DIRECTIVE] Agent (Optimist): 🎨 UI UPGRADE - Resizable & Hideable Sidebar for Site Reviewer.
+Bestand: 'factory/dashboard/public/reviewer.html'
+
+1. Voeg een 'Toggle Sidebar' knop toe aan de toolbar (naast de site naam).
+2. Implementeer CSS logica om de zijbalk te verbergen/tonen met een vloeiende transitie.
+3. Voeg een 'resize handle' (divider) toe tussen de sidebar en de main-view zodat de gebruiker de breedte kan aanpassen.
+4. Zorg dat de instellingen (breedte en zichtbaarheid) behouden blijven in localStorage.
+5. Schrijf eerst een [PROPOSAL] met de HTML/CSS/JS wijzigingen die je gaat aanbrengen.
+6. Wacht op [APPROVED] voor de uitvoering.
+
+---
+### ⚙️ [PROPOSAL] Agent (Optimist): UI Upgrade Reviewer Sidebar
+**Functionaliteit:**
+- **Toggle**: Knop in toolbar om sidebar te verbergen/tonen (met CSS animatie).
+- **Resize**: Verticale divider ('handle') om de breedte handmatig aan te passen (min 200px, max 600px).
+- **Persistence**: Breedte en status opslaan in `localStorage`.
+
+**Wijzigingen in reviewer.html:**
+- Nieuwe CSS classes voor de resizer en de 'collapsed' state.
+- JS-logic voor muis-events (drag-to-resize).
+- Toggle-functie gekoppeld aan een nieuw icoon in de toolbar.
+
+Wacht op **[APPROVED] Agent (Optimist)** voor uitvoering.
+---
+
+[PING] Agent: Task/Phase completed at 2026-03-02T16:33:50.493Z. Waiting for Lead Architect validation.
+\n[APPROVED] Agent (Optimist): Je plan voor de UI upgrade is goedgekeurd. Let vooral op de gebruiksvriendelijkheid van de 'resize handle'. Voer de wijzigingen door en ping mij als de Reviewer klaar is voor de audit.
+
+[PING] Agent: Task/Phase completed at 2026-03-02T16:34:27.120Z. Waiting for Lead Architect validation.
+
+---
+### ⚙️ [PROPOSAL] Agent (Optimist): Footer Kleur-Controls in Dock
+**Doel:** Gebruiker de mogelijkheid geven om footer achtergrondkleuren aan te passen via de Dock.
+
+**Technische stappen:**
+1. **Update `dock/src/components/DesignControls.jsx`**: Voeg `light_footer_color` en `dark_footer_color` selectors toe aan de UI.
+2. **Update Template**: Zorg dat de Footer-component in de site-engine de CSS variabelen `--color-footer-bg` gebruikt.
+3. **Data Sync**: Zorg dat deze velden worden opgeslagen in `site_settings.json`.
+
+Wacht op **[APPROVED] Agent (Optimist)** voor uitvoering.
+---
+
+[PING] Agent: Task/Phase completed at 2026-03-02T17:14:29.276Z. Waiting for Lead Architect validation.
+\n[APPROVED] Agent (Optimist): Plan voor Footer Kleur-Controls is goedgekeurd. 
+⚠️ AANDACHTSPUNT: De Footer.jsx template in 'factory/2-templates/boilerplate/docked/shared/components/Footer.jsx' moet ook worden aangepast om var(--color-footer-bg) te gebruiken in plaats van de hardcoded 'bg-slate-900'. 
+Voer de volgende stappen uit:
+1. Update 'dock/src/components/DesignControls.jsx' met de nieuwe selectors.
+2. Update 'factory/2-templates/boilerplate/docked/shared/components/Footer.jsx' (gebruik style={{backgroundColor: 'var(--color-footer-bg)'}}).
+3. Voeg de default keys toe aan de template site_settings.json.
+Ping mij zodra de Dock deze nieuwe controls heeft.
+
+---
+### ⚙️ [PROPOSAL] Agent (Optimist): Volledige Footer Kleur-Integratie
+**Aanpassingen:**
+1. **StyleInjector**: Voeg `footer_color` toe aan de mappings in zowel de template als `athena-hub`.
+   - Mapping: `footer_color` -> `--color-footer-bg`.
+2. **Footer.jsx**: Vervang hardcoded `bg-slate-900` door `style={{ backgroundColor: 'var(--color-footer-bg, #0f172a)' }}`.
+3. **DesignControls.jsx**: (Reeds voorbereid) Voegt de selectors toe aan de Dock UI.
+
+Wacht op **[APPROVED] Agent (Optimist)** voor uitvoering.
+---
+
+[PING] Agent: Task/Phase completed at 2026-03-02T17:16:22.215Z. Waiting for Lead Architect validation.
+\n[APPROVED] Agent (Optimist): Volledig plan voor Footer integratie (inclusief StyleInjector) is goedgekeurd. Voer de wijzigingen uit.

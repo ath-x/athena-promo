@@ -14,7 +14,10 @@ export default function Footer({ data }) {
   const linkedin = contactInfo.linkedin_url || contactInfo.linkedin || '';
 
   return (
-    <footer className="py-24 bg-slate-900 text-slate-400 border-t border-slate-800 relative overflow-hidden">
+    <footer 
+      className="py-24 text-slate-400 border-t border-slate-800 relative overflow-hidden"
+      style={{ backgroundColor: 'var(--color-footer-bg, #0f172a)' }}
+    >
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-[80px] -ml-32 -mb-32"></div>
       
       <div className="container mx-auto px-6 relative z-10">

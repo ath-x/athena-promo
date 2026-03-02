@@ -24,17 +24,27 @@ function Header({ primaryTable, tableName, siteSettings = {}, navData = [] }) {
   const sortedNav = [...navData].sort((a, b) => (a.menu_positie || 0) - (b.menu_positie || 0));
 
   return (
-    <header id="home" className="relative min-h-[85vh] flex flex-col overflow-hidden bg-primary text-white">
-      {/* Navigation Bar */}
-      <nav className="relative z-50 w-full px-8 py-6 flex items-center justify-between">
+    <>
+      {/* Fixed Sticky Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-[1000] w-full px-8 py-4 flex items-center justify-between bg-primary/60 backdrop-blur-md border-b border-white/10 transition-all duration-300">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center text-2xl">
-            <i className="fa-solid fa-scissors text-white"></i>
-          </div>
+          {settings.site_logo_image ? (
+            <div className="w-10 h-10 overflow-hidden">
+              <EditableMedia 
+                src={settings.site_logo_image}
+                className="w-full h-full object-contain"
+                cmsBind={{ file: 'site_settings', index: 0, key: 'site_logo_image' }}
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-xl">
+              <i className="fa-solid fa-scissors text-white"></i>
+            </div>
+          )}
           <EditableText 
             tagName="span"
             value={title}
-            className="font-serif font-bold text-2xl tracking-tighter uppercase"
+            className="font-serif font-bold text-xl tracking-tighter uppercase"
             table="basisgegevens"
             id={0}
             field={fallbackTitleKey}
@@ -46,7 +56,7 @@ function Header({ primaryTable, tableName, siteSettings = {}, navData = [] }) {
             <a 
               key={idx} 
               href={`#${item.slug}`} 
-              className={`text-sm font-bold uppercase tracking-widest transition-colors hover:text-accent ${item.is_call_to_action ? 'px-6 py-2 bg-accent text-white rounded-full shadow-lg shadow-accent/20' : 'text-white/70'}`}
+              className={`text-xs font-bold uppercase tracking-widest transition-colors hover:text-accent ${item.is_call_to_action ? 'px-5 py-2 bg-accent text-white rounded-full shadow-lg shadow-accent/20' : 'text-white/70'}`}
             >
               <EditableText 
                 value={item.titel_navigatie} 
@@ -57,7 +67,9 @@ function Header({ primaryTable, tableName, siteSettings = {}, navData = [] }) {
         </div>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center text-center px-6">
+      {/* Main Header / Hero Section */}
+      <header id="home" className="relative min-h-[85vh] flex flex-col overflow-hidden bg-primary text-white pt-20">
+        <div className="flex-1 flex items-center justify-center text-center px-6">
         {/* Background Media Overlay */}
         <div className="absolute inset-0 opacity-40">
           <EditableMedia 
@@ -88,7 +100,7 @@ function Header({ primaryTable, tableName, siteSettings = {}, navData = [] }) {
           )}
           <div className="flex gap-6 justify-center">
              <a href="#diensten_tarieven" className="btn-primary px-10 py-5 text-lg">Onze Diensten</a>
-             <a href="#contact" className="px-10 py-5 border-2 border-white/30 rounded-full font-bold hover:bg-white hover:text-primary transition-all">Contact</a>
+             <a href="#basisgegevens" className="px-10 py-5 border-2 border-white/30 rounded-full font-bold hover:bg-white hover:text-primary transition-all">Contact</a>
           </div>
         </div>
       </div>
@@ -100,6 +112,7 @@ function Header({ primaryTable, tableName, siteSettings = {}, navData = [] }) {
         </svg>
       </div>
     </header>
+    </>
   );
 }
 

@@ -96,8 +96,7 @@ const Section = ({ data }) => {
         // Skip basisgegevens (al in footer/header)
         if (config.table === 'diensten_hoofdgroepen' || 
             config.table === 'social_media' || 
-            config.table === 'paginastructuur' ||
-            config.table === 'basisgegevens') return null;
+            config.table === 'paginastructuur') return null;
 
         const realKey = Object.keys(data).find(k => k.toLowerCase() === config.table.toLowerCase());
         let items = data[realKey] || [];

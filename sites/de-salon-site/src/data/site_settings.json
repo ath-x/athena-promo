@@ -2,10 +2,13 @@
   {
     "title": "De Schaar",
     "hero_image": "hero_de-schaar-1.png",
-    "hero_height": "85vh",
+    "hero_height": "0vh",
     "hero_max_height": "150vh",
     "hero_aspect_ratio": "16/9",
-    "light_title_color": "#c8cfdf",
-    "site_logo_image": "/site-logo.svg"
+    "light_title_color": "#ededed",
+    "site_logo_image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    "hero_overlay_opacity": "1",
+    "content_top_offset": "0",
+    "--color-title-rgb": "237 237 237"
   }
 ]

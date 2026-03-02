@@ -161,7 +161,7 @@ export default function DesignControls({ onColorChange, siteStructure }) {
       // We filteren de content-keys (links/teksten) eruit om corruptie te voorkomen
       const filteredData = {};
       Object.keys(localColors).forEach(key => {
-        if (key.includes('color') || key.includes('offset') || key.includes('header_') || key.includes('hero_')) {
+        if (key.includes('color') || key.includes('offset') || key.includes('header_') || key.includes('hero_') || key.includes('footer_')) {
           // Check of het geen link-object is dat we per ongeluk als string hebben
           if (typeof localColors[key] !== 'object') {
             filteredData[key] = localColors[key];
@@ -424,6 +424,7 @@ export default function DesignControls({ onColorChange, siteStructure }) {
             <ColorPicker label="Button BG" settingsKey="light_button_color" value={localColors['light_button_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Card BG" settingsKey="light_card_color" value={localColors['light_card_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Header BG" settingsKey="light_header_color" value={localColors['light_header_color']} onPreview={handlePreview} onSave={handleSave} />
+            <ColorPicker label="Footer BG" settingsKey="light_footer_color" value={localColors['light_footer_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Hero BG" settingsKey="light_hero_bg_color" value={localColors['light_hero_bg_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Background" settingsKey="light_bg_color" value={localColors['light_bg_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Text" settingsKey="light_text_color" value={localColors['light_text_color']} onPreview={handlePreview} onSave={handleSave} />
@@ -443,6 +444,7 @@ export default function DesignControls({ onColorChange, siteStructure }) {
             <ColorPicker label="Button BG" settingsKey="dark_button_color" value={localColors['dark_button_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Card BG" settingsKey="dark_card_color" value={localColors['dark_card_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Header BG" settingsKey="dark_header_color" value={localColors['dark_header_color']} onPreview={handlePreview} onSave={handleSave} />
+            <ColorPicker label="Footer BG" settingsKey="dark_footer_color" value={localColors['dark_footer_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Hero BG" settingsKey="dark_hero_bg_color" value={localColors['dark_hero_bg_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Background" settingsKey="dark_bg_color" value={localColors['dark_bg_color']} onPreview={handlePreview} onSave={handleSave} />
             <ColorPicker label="Text" settingsKey="dark_text_color" value={localColors['dark_text_color']} onPreview={handlePreview} onSave={handleSave} />

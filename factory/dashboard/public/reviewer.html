@@ -6,26 +6,60 @@
     <title>Athena Site Reviewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
-        .sidebar { width: 300px; background-color: #1e293b; border-right: 1px solid #334155; height: 100vh; display: flex; flex-direction: column; }
-        .main-view { flex-grow: 1; height: 100vh; position: relative; }
+        :root { --sidebar-width: 300px; }
+        body { background-color: #0f172a; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
+        
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background-color: #1e293b; 
+            border-right: 1px solid #334155; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            transition: width 0.3s ease-in-out;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .sidebar.collapsed { width: 0; overflow: hidden; border-right: none; }
+        
+        .resizer {
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            background: transparent;
+            position: absolute;
+            right: -3px;
+            top: 0;
+            z-index: 20;
+            transition: background 0.2s;
+        }
+        .resizer:hover, .resizer.dragging { background: rgba(59, 130, 246, 0.5); }
+
+        .main-view { flex-grow: 1; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         iframe { width: 100%; height: 100%; border: none; background: white; }
-        .site-item { padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; transition: background 0.2s; }
+        
+        .site-item { padding: 12px; border-bottom: 1px solid #334155; cursor: pointer; transition: background 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .site-item:hover { background-color: #334155; }
         .site-item.active { background-color: #3b82f6; color: white; }
+        
         .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; }
         .status-loading { background: #f59e0b; color: #000; }
         .status-ready { background: #10b981; color: #fff; }
         .status-error { background: #ef4444; color: #fff; }
+        
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Disable transitions during drag */
+        .no-transition { transition: none !important; }
     </style>
 </head>
 <body class="flex">
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="p-4 border-bottom border-slate-700">
+    <div id="sidebar" class="sidebar">
+        <div class="p-4 border-b border-slate-700 shrink-0">
             <h1 class="text-xl font-bold text-blue-400">Athena Reviewer</h1>
             <p id="progress-text" class="text-xs text-slate-400 mt-1">Laden van sites...</p>
         </div>
@@ -34,17 +68,23 @@
             <!-- Sites worden hier geladen -->
         </div>
 
-        <div class="p-4 bg-slate-900 flex justify-between gap-2">
-            <button onclick="prevSite()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm flex-grow">Vorige</button>
-            <button onclick="nextSite()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm flex-grow font-bold">Volgende</button>
+        <div class="p-4 bg-slate-900 flex justify-between gap-2 shrink-0">
+            <button onclick="prevSite()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-xs flex-grow">Vorige</button>
+            <button onclick="nextSite()" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-xs flex-grow font-bold">Volgende</button>
         </div>
+
+        <!-- Resize Handle -->
+        <div id="resizer" class="resizer"></div>
     </div>
 
     <!-- Main Content -->
-    <div class="main-view flex flex-col">
+    <div class="main-view">
         <!-- Toolbar -->
-        <div class="h-12 bg-slate-800 flex items-center justify-between px-4 border-b border-slate-700">
+        <div class="h-12 bg-slate-800 flex items-center justify-between px-4 border-b border-slate-700 shrink-0">
             <div class="flex items-center">
+                <button onclick="toggleSidebar()" class="mr-4 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700" title="Zijbalk in-/uitklappen">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
                 <span id="current-site-name" class="font-medium mr-4 text-blue-300">Selecteer een site</span>
                 <div id="site-status-container" class="hidden">
                     <span id="site-status-spinner" class="loader"></span>
@@ -72,6 +112,74 @@
         let sites = [];
         let currentIndex = -1;
         const API_BASE = window.location.origin;
+
+        // Elements
+        const sidebar = document.getElementById('sidebar');
+        const resizer = document.getElementById('resizer');
+        const root = document.documentElement;
+
+        // 🛠️ Sidebar Resizing Logic
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            sidebar.classList.add('no-transition');
+            resizer.classList.add('dragging');
+            
+            // Voorkom tekst selectie tijdens drag
+            document.body.style.userSelect = 'none';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            let newWidth = e.clientX;
+            if (newWidth < 200) newWidth = 200;
+            if (newWidth > 600) newWidth = 600;
+            
+            root.style.setProperty('--sidebar-width', `${newWidth}px`);
+            localStorage.setItem('reviewer-sidebar-width', newWidth);
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = 'default';
+                sidebar.classList.remove('no-transition');
+                resizer.classList.remove('dragging');
+                document.body.style.userSelect = 'auto';
+            }
+        });
+
+        // 🛠️ Toggle Sidebar
+        function toggleSidebar() {
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            localStorage.setItem('reviewer-sidebar-collapsed', isCollapsed);
+        }
+
+        // Initialize Settings from LocalStorage
+        function initSettings() {
+            const savedWidth = localStorage.getItem('reviewer-sidebar-width');
+            if (savedWidth) {
+                root.style.setProperty('--sidebar-width', `${savedWidth}px`);
+            }
+            
+            const isCollapsed = localStorage.getItem('reviewer-sidebar-collapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+            }
+        }
+
+        // ⚓ Athena Message Interceptor
+        window.addEventListener('message', (event) => {
+            const { type } = event.data;
+            if (type === 'SITE_CLICK') {
+                console.log("⚓ Reviewer Intercepted SITE_CLICK:", event.data);
+                // In de reviewer doen we hier niets mee, behalve voorkomen dat het systeem 
+                // denkt dat we in de 'Dock' zitten en gekke dingen gaat doen.
+            }
+        });
 
         async function loadSites() {
             try {
@@ -108,7 +216,6 @@
         async function selectSite(index) {
             if (index < 0 || index >= sites.length) return;
             
-            // UI Update
             currentIndex = index;
             renderList();
             updateProgress();
@@ -120,12 +227,12 @@
             document.getElementById('site-status-container').classList.remove('hidden');
             document.getElementById('site-status-spinner').classList.remove('hidden');
             document.getElementById('site-status-text').innerText = "Opstarten...";
+            document.getElementById('site-status-text').className = "text-sm";
             
             document.getElementById('open-dock-btn').classList.add('hidden');
             document.getElementById('external-btn').classList.add('hidden');
 
             try {
-                // Backend call om site te starten
                 const response = await fetch(`${API_BASE}/api/sites/${site.name}/preview`, { method: 'POST' });
                 const result = await response.json();
 
@@ -141,13 +248,12 @@
 
         function checkHealth(url) {
             let attempts = 0;
-            const maxAttempts = 30; // 30 seconden timeout
+            const maxAttempts = 30;
 
             const timer = setInterval(async () => {
                 attempts++;
                 try {
                     const res = await fetch(url, { mode: 'no-cors' });
-                    // Als we hier komen, is de server up (of geeft iig antwoord)
                     clearInterval(timer);
                     showReady(url);
                 } catch (e) {
@@ -171,6 +277,30 @@
 
             document.getElementById('open-dock-btn').classList.remove('hidden');
             document.getElementById('external-btn').classList.remove('hidden');
+
+            // 🛠️ Inject functional test handler
+            setTimeout(() => {
+                try {
+                    const doc = frame.contentWindow.document;
+                    doc.addEventListener('click', (e) => {
+                        const link = e.target.closest('a');
+                        if (link && e.shiftKey) {
+                            console.log("🛠️ Reviewer: Handling functional link click:", link.getAttribute('href'));
+                            const href = link.getAttribute('href');
+                            if (href.startsWith('#')) {
+                                e.preventDefault();
+                                const targetId = href.substring(1);
+                                const targetEl = doc.getElementById(targetId);
+                                if (targetEl) {
+                                    targetEl.scrollIntoView({ behavior: 'smooth' });
+                                }
+                            }
+                        }
+                    }, true);
+                } catch (err) {
+                    console.warn("Kon test-handler niet injecteren (mogelijk CORS):", err);
+                }
+            }, 2000);
         }
 
         function showError(msg) {
@@ -198,6 +328,7 @@
         }
 
         // Init
+        initSettings();
         loadSites();
     </script>
 </body>
