@@ -1,23 +1,23 @@
 {
-  "5002": {
-    "pid": 10032,
-    "id": "athena-dock",
-    "type": "dock",
-    "startTime": "2026-03-01T19:27:26.353Z",
-    "logFile": "/home/kareltestspecial/0-IT/2-Fabriek/athena/athena-x/factory/output/logs/athena-dock-dock.log"
+  "5434": {
+    "pid": 16993,
+    "id": "code-crafters-bold",
+    "type": "preview",
+    "startTime": "2026-03-02T10:05:08.977Z",
+    "logFile": "/home/kareltestspecial/0-IT/2-Fabriek/athena/athena-x/factory/output/logs/code-crafters-bold-preview.log"
   },
-  "5004": {
-    "pid": 5568,
-    "id": "media-mapper",
-    "type": "editor",
-    "startTime": "2026-03-01T19:21:21.057Z",
-    "logFile": "/home/kareltestspecial/0-IT/2-Fabriek/athena/athena-x/factory/output/logs/media-mapper-editor.log"
+  "5834": {
+    "pid": 19629,
+    "id": "code-crafters",
+    "type": "preview",
+    "startTime": "2026-03-02T10:07:42.762Z",
+    "logFile": "/home/kareltestspecial/0-IT/2-Fabriek/athena/athena-x/factory/output/logs/code-crafters-preview.log"
   },
   "6041": {
-    "pid": 5197,
+    "pid": 5664,
     "id": "athena-hub",
     "type": "preview",
-    "startTime": "2026-03-01T19:21:11.570Z",
+    "startTime": "2026-03-02T09:55:39.838Z",
     "logFile": "/home/kareltestspecial/0-IT/2-Fabriek/athena/athena-x/factory/output/logs/athena-hub-preview.log"
   }
 }
