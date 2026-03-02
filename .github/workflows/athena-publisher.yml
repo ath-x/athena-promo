@@ -36,14 +36,17 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             INPUT_SITES="${{ github.event.inputs.sites }}"
             if [ -n "$INPUT_SITES" ]; then
-              CHANGED_SITES=$(echo "$INPUT_SITES" | jq -R -s -c 'split(" ") | map(select(length > 0))')
+              # Split by space, trim whitespace
+              CHANGED_SITES=$(echo "$INPUT_SITES" | jq -R -s -c 'split(" ") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
             else
-              CHANGED_SITES=$(ls -d sites/*/ 2>/dev/null | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+              # List directories, basename, trim
+              CHANGED_SITES=$(ls -d sites/*/ 2>/dev/null | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
             fi
           else
             # Push trigger: alleen gewijzigde sites
-            RAW_SITES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^sites/' | cut -d/ -f2 | sort -u | xargs)
-            CHANGED_SITES=$(echo "$RAW_SITES" | jq -R -s -c 'split(" ") | map(select(length > 0))')
+            # Gebruik git diff en verwijder witruimte met tr
+            RAW_SITES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^sites/' | cut -d/ -f2 | sort -u | tr -d '\r' | xargs)
+            CHANGED_SITES=$(echo "$RAW_SITES" | jq -R -s -c 'split(" ") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
           fi
           
           if [ "$CHANGED_SITES" = "[]" ]; then
