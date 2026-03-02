@@ -2,13 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 
 const CartContext = createContext();
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({ children, siteId = 'athena' }) => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const storageKey = `athena_cart_${siteId}`;
 
   // Load cart from localStorage on init
   useEffect(() => {
-    const savedCart = localStorage.getItem('athena_cart');
+    const savedCart = localStorage.getItem(storageKey);
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
@@ -16,12 +17,12 @@ export const CartProvider = ({ children }) => {
         console.error("Failed to parse cart", e);
       }
     }
-  }, []);
+  }, [storageKey]);
 
   // Save cart to localStorage on change
   useEffect(() => {
-    localStorage.setItem('athena_cart', JSON.stringify(cart));
-  }, [cart]);
+    localStorage.setItem(storageKey, JSON.stringify(cart));
+  }, [cart, storageKey]);
 
   const addToCart = useCallback((product) => {
     setCart(prevCart => {

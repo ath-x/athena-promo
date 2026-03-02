@@ -12,6 +12,7 @@ import { DisplayConfigProvider } from './components/DisplayConfigContext';
 
 const App = ({ data }) => {
   const primaryTable = Object.keys(data)[0];
+  const siteId = data.site_settings?.[0]?.site_name || 'athena-site';
 
   const content = (
     <DisplayConfigProvider data={data}>
@@ -32,7 +33,7 @@ const App = ({ data }) => {
   );
 
   /* {{SHOP_WRAPPER_START}} */
-  return <CartProvider>{content}</CartProvider>;
+  return <CartProvider siteId={siteId}>{content}</CartProvider>;
   /* {{SHOP_WRAPPER_END}} */
 
   /* {{NON_SHOP_WRAPPER_START}} */

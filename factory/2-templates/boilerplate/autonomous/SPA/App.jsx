@@ -70,10 +70,11 @@ function AppContent({ data = {} }) {
 function App({ data = {} }) {
   // Haal stijlen op uit de ingeladen data
   const initialStyles = data.style_bindings || data.Style_bindings || {};
+  const siteId = (data.site_settings || data.Site_settings)?.[0]?.site_name || 'athena-site';
 
   return (
     <StyleProvider initialStyles={initialStyles}>
-      <CartProvider>
+      <CartProvider siteId={siteId}>
         <AppContent data={data} />
       </CartProvider>
     </StyleProvider>
