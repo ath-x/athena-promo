@@ -8,6 +8,7 @@ import { Validator } from '../lib/validator.js';
 import { QualityChecker } from '../lib/quality-check.js';
 import { ThemeEngine } from '../lib/theme-engine.js';
 import { AssetScavenger } from '../lib/AssetScavenger.js';
+import { LogoGenerator } from '../lib/logo-generator.js';
 import * as recast from 'recast';
 import * as babelParser from '@babel/parser';
 
@@ -234,6 +235,11 @@ export class ProjectGenerator {
         const dataDir = path.join(this.projectDir, 'src/data');
         fs.writeFileSync(path.join(this.projectDir, 'athena-config.json'), JSON.stringify({ ...this.config, safeName: this.safeName, generatedAt: new Date() }, null, 2));
         fs.writeFileSync(path.join(dataDir, 'schema.json'), JSON.stringify(this.blueprint, null, 2));
+        
+        // Phase 4.4: Generate Randomized Logo
+        const primaryColor = this.blueprint.design_system?.colors?.primary || '#3b82f6';
+        const logoFile = LogoGenerator.saveToProject(this.projectDir, this.config.projectName, primaryColor);
+
         if (this.blueprint.data_structure) {
             this.blueprint.data_structure.forEach(t => {
                 const p = path.join(dataDir, `${t.table_name.toLowerCase()}.json`);
@@ -243,7 +249,11 @@ export class ProjectGenerator {
         }
         ['site_settings.json', 'display_config.json', 'style_bindings.json', 'layout_settings.json', 'section_settings.json'].forEach(f => {
             const p = path.join(dataDir, f);
-            if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify({ site_name: this.config.projectName }, null, 2));
+            if (!fs.existsSync(p)) {
+                const initialSettings = { site_name: this.config.projectName };
+                if (f === 'site_settings.json') initialSettings.site_logo_image = logoFile;
+                fs.writeFileSync(p, JSON.stringify(initialSettings, null, 2));
+            }
         });
 
         // Phase 4.2: Generate style_config.json from ThemeEngine
