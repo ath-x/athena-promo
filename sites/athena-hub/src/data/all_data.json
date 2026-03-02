@@ -271,54 +271,44 @@
   },
   "showcase": [
     {
-      "name": "Athena Pro",
-      "category": "B2B / SaaS",
-      "description": "Een professionele showcase voor geavanceerde B2B diensten en SaaS oplossingen.",
+      "name": "De Salon",
+      "category": "Beauty & Wellness",
+      "description": "Een moderne website voor kapsalons met focus op sfeer en team-presentatie.",
       "link": {
-        "label": "Bekijk Demo",
-        "url": "https://athena-cms-factory.github.io/athena-pro/"
+        "label": "BEKIJK PROJECT",
+        "url": "https://athena-cms-factory.github.io/de-salon-site"
       },
-      "image": "showcase-athena-pro.jpg"
-    },
-    {
-      "name": "Cloud Architects",
-      "category": "IT / Tech",
-      "description": "Strakke, moderne website voor IT-consultants en cloud architectuur specialisten.",
-      "link": {
-        "label": "Bekijk Demo",
-        "url": "https://athena-cms-factory.github.io/cloud-architects/"
-      },
-      "image": "showcase-cloud-architects.jpg"
+      "image": "technische.png"
     },
     {
       "name": "Bakkerij Artisanaal",
-      "category": "Retail / Food",
-      "description": "Breng de geur van vers brood online met deze sfeervolle ambachtelijke template.",
+      "category": "Detailhandel & Food",
+      "description": "Prachtige productcatalogus voor lokale winkels met bestelmogelijkheid via e-mail.",
       "link": {
-        "label": "Bekijk Demo",
-        "url": "https://athena-cms-factory.github.io/demo-bakkerij/"
+        "label": "BEKIJK PROJECT",
+        "url": "https://athena-cms-factory.github.io/demo-bakkerij"
       },
-      "image": "showcase-demo-bakkerij.jpg"
+      "image": "artisanal-1-1770398212360.jpeg"
     },
     {
-      "name": "Pure Relaxation",
-      "category": "Wellness",
-      "description": "Een oase van rust voor wellness centra, therapeuten en massagepraktijken.",
+      "name": "Belgian Chocolate Shop",
+      "category": "Webshop",
+      "description": "Een webshop voor Belgische chocolaterie",
       "link": {
-        "label": "Bekijk Demo",
-        "url": "https://athena-cms-factory.github.io/pure-relaxation/"
+        "label": "BEKIJK PROJECT",
+        "url": "https://athena-cms-factory.github.io/chocolade-shop/"
       },
-      "image": "showcase-pure-relaxation.jpg"
+      "image": "hero-1770476346310.jpeg"
     },
     {
-      "name": "Urban Oasis",
-      "category": "Lifestyle",
-      "description": "Modern interieurontwerp en lifestyle concepten gepresenteerd in een luxe stijl.",
+      "name": "Urban Soles",
+      "category": "Webshop",
+      "description": "High-end sneaker shop met 20+ producten en AI-gegenereerde content.",
       "link": {
-        "label": "Bekijk Demo",
-        "url": "https://athena-cms-factory.github.io/urban-oasis/"
+        "label": "BEKIJK PROJECT",
+        "url": "https://athena-cms-factory.github.io/urban-soles/"
       },
-      "image": "showcase-urban-oasis.jpg"
+      "image": "1-1770476441932-1770476982985.jpg"
     }
   ],
   "site_settings": [
