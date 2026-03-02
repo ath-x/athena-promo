@@ -50,14 +50,14 @@
     "port": 5484
   },
   {
-    "id": "code-crafters-bold",
+    "id": "code-crafters",
     "name": "code-crafters-bold",
     "siteType": "tech-consultancy",
     "generatedAt": "2026-02-27T18:40:05.305Z",
     "governance_mode": "dev-mode",
-    "repoUrl": null,
+    "repoUrl": "https://github.com/athena-cms-factory/code-crafters.git",
     "liveUrl": null,
-    "port": 5434
+    "port": 5834
   },
   {
     "id": "code-crafters-modern-dark",
@@ -120,14 +120,14 @@
     "port": 6037
   },
   {
-    "id": "code-crafters",
+    "id": "code-crafters-plain",
     "name": "code-crafters",
     "siteType": "tech-consultancy",
     "generatedAt": "2026-02-27T18:36:12.522Z",
     "governance_mode": "dev-mode",
-    "repoUrl": null,
+    "repoUrl": "https://github.com/athena-cms-factory/code-crafters-plain.git",
     "liveUrl": null,
-    "port": 5834
+    "port": 3000
   },
   {
     "id": "urban-oasis",

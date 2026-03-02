@@ -276,7 +276,7 @@
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[data-dock-bind]');
         if (target && window.parent !== window) {
-            if (e.shiftKey) return;
+            if (!e.shiftKey) return; // v8: Shift+Click to edit
 
             e.preventDefault();
             e.stopPropagation();

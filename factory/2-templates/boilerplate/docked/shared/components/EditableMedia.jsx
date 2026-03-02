@@ -43,7 +43,7 @@ export default function EditableMedia({ src, alt, className, cmsBind, ...props }
       className={`relative group ${className} cursor-pointer hover:ring-2 hover:ring-blue-400/40 rounded-sm transition-all duration-200`}
       data-dock-bind={dockBind}
       data-dock-type="media"
-      title={cmsBind ? `Klik om "${cmsBind.key}" te bewerken in de Dock` : undefined}
+      title={cmsBind ? `Shift+Klik om "${cmsBind.key}" te bewerken in de Dock` : undefined}
     >
       {renderMedia()}
     </div>

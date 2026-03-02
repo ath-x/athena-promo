@@ -304,6 +304,10 @@
 
         const target = e.target.closest('[data-dock-bind]');
         if (target && window.parent !== window) {
+            // v8: Shift+Click is nu vereist voor bewerken in de Dock
+            // Zodat normale links/knoppen blijven werken voor navigatie
+            if (!e.shiftKey) return;
+
             e.preventDefault();
             e.stopPropagation();
             

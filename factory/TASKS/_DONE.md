@@ -1,5 +1,14 @@
 # ✅ DONE - Athena CMS
 
+## Interaction & UX Standard v8.1 - 2026-03-02
+- [x] **Swapped Dock Interaction Logic**
+    - Fundamentele UX verbetering: Normale klik = Normale werking; Shift+Klik = Editor (Dock) werking.
+    - Dit herstelt de bruikbaarheid van live sites op GitHub Pages (zoals Athena Hub) die voorheen Shift+Klik vereisten voor navigatie.
+- [x] **Universal Component Update**
+    - Bijgewerkt `EditableText`, `EditableLink` en `EditableMedia` templates met de nieuwe Shift+Klik instructies in de tooltips.
+- [x] **Global Ecosystem Patch**
+    - Geautomatiseerde batch-update van alle `dock-connector.js` bestanden in de `sites/` directory (30+ sites) om de nieuwe interactiestandaard universeel toe te passen.
+
 ## Maintenance & Localization (Jets Archive) - 2026-02-28
 - [x] **Jets Archive Restoration**
     - Hersteld van white-page crash door `HashRouter` toe te voegen in `App.jsx`.

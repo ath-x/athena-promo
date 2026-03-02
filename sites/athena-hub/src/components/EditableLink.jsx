@@ -54,8 +54,9 @@ export default function EditableLink({
   const content = finalLabel || children || (typeof actualUrl === 'string' ? actualUrl : "Link");
 
   const handleLinkAction = (e) => {
-    if (isDev && !e.shiftKey) {
+    if (isDev && e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       console.log('📡 [EditableLink] Sending discovered URL to Dock:', finalUrl);
       window.parent.postMessage({
         type: 'SITE_CLICK',

@@ -40,7 +40,7 @@ export default function EditableText({ tagName: Tag = 'span', value, children, c
       data-dock-type="text"
       className={`${className} cursor-pointer hover:ring-2 hover:ring-blue-400/40 hover:bg-blue-50/5 rounded-sm transition-all duration-200`}
       style={style}
-      title={`Klik om "${binding.key}" te bewerken in de Dock`}
+      title={`Shift+Klik om "${binding.key}" te bewerken in de Dock`}
       {...props}
     >
       {content}

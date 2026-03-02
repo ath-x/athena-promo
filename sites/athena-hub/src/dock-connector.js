@@ -159,7 +159,7 @@
     // Handle clicks for editing
     window.addEventListener('click', (e) => {
         const el = e.target.closest('[data-dock-bind]');
-        if (el && !e.shiftKey) {
+        if (el && e.shiftKey) {
             e.preventDefault();
             e.stopPropagation();
             const binding = JSON.parse(el.getAttribute('data-dock-bind'));

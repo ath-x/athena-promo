@@ -153,7 +153,7 @@ const Section = ({ data }) => {
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="aspect-[16/10] overflow-hidden block relative"
-                          onClick={(e) => { if (!e.shiftKey) e.preventDefault(); }}
+                          onClick={(e) => { if (e.shiftKey) e.preventDefault(); }}
                         >
                           <EditableMedia 
                             src={item[imgKey]} 

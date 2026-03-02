@@ -56,7 +56,7 @@ export default function EditableLink({
       data-dock-bind={dockBind}
       data-dock-type="link"
       className={`${className} cursor-pointer hover:ring-2 hover:ring-blue-400/40 rounded-sm transition-all`}
-      title={`Klik om "${binding.key}" te bewerken in de Dock (Shift+Klik om actie uit te voeren)`}
+      title={`Shift+Klik om "${binding.key}" te bewerken in de Dock (Normale klik om link te volgen)`}
       {...props}
     >
       {content}

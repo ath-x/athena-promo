@@ -1,5 +1,13 @@
 # Changelog - Athena CMS Factory
 
+## [8.0.3] - 2026-03-02
+### ⚡ User Experience & Interaction Standard (v8.1)
+- **Swapped Dock Interaction Logic**: De interactie tussen de Dock en de Site is fundamenteel verbeterd. 
+    - **Normale klik**: Voert nu altijd de standaard actie uit (link volgen, knop indrukken). Dit lost het probleem op waarbij live sites op GitHub Pages (zoals Athena Hub) Shift+Klik vereisten voor navigatie.
+    - **Shift + Klik**: Is nu de standaard methode om een element te selecteren voor bewerking in de Athena Dock.
+- **Universal Tooltip Update**: Alle `Editable` componenten (`EditableText`, `EditableLink`, `EditableMedia`) tonen nu de correcte instructie in de tooltip: "Shift+Klik om te bewerken".
+- **Global Patch**: De nieuwe logica is batch-gewijs uitgerold naar alle 30+ bestaande sites in de `sites/` directory via een geautomatiseerde engine-patch.
+
 ## [8.0.2] - 2026-03-02
 ### ⚡ Performance & Scalability Optimization
 - **Parallel Publisher Workflow**: De monorepo-publisher (`athena-publisher.yml`) is volledig herschreven. Sites worden nu parallel gebouwd en gepusht via een matrix-job, wat de deployment-tijd voor bulk-updates met circa 70% verlaagt.
