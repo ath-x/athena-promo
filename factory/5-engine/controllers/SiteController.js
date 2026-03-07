@@ -372,6 +372,82 @@ export class SiteController {
     }
 
     /**
+     * Compare Local, GitHub, and Google Sheet data for a site
+     */
+    async compareSiteSources(id) {
+        const paths = this.dataManager.resolvePaths(id);
+        const dataDir = paths.dataDir;
+        if (!fs.existsSync(dataDir)) throw new Error("Data directory not found.");
+
+        const jsonFiles = fs.readdirSync(dataDir).filter(f => f.endsWith('.json') && f !== 'schema.json');
+        const report = {
+            hasDrift: false,
+            files: {}
+        };
+
+        // 1. Fetch GitHub version (origin/main)
+        // We use git show to see the file without pulling
+        const getGithubContent = (file) => {
+            try {
+                const relPath = path.relative(this.root, path.join(dataDir, file));
+                return JSON.parse(execSync(`git show origin/main:${relPath}`, { stdio: ['pipe', 'pipe', 'ignore'] }).toString());
+            } catch (e) { return null; }
+        };
+
+        // 2. Fetch Google Sheet version (Simulated fetch-data to memory)
+        // For simplicity, we trigger a fetch-data but redirect output to a temp location 
+        // OR we use the DataManager to fetch without saving.
+        // Let's assume for now we look at the last fetched TSV or fetch one-off.
+        
+        for (const file of jsonFiles) {
+            const localData = JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8'));
+            const githubData = getGithubContent(file);
+            
+            const fileReport = {
+                localVsGitHub: this._compareArrays(localData, githubData),
+                // Sheet comparison logic needs fetch-data support for memory
+                drift: false
+            };
+
+            if (fileReport.localVsGitHub.changed) {
+                report.hasDrift = true;
+                fileReport.drift = true;
+            }
+
+            report.files[file] = fileReport;
+        }
+
+        return report;
+    }
+
+    _compareArrays(arr1, arr2) {
+        if (!arr1 || !arr2) return { changed: true, reason: !arr1 ? "Local missing" : "GitHub missing" };
+        const s1 = JSON.stringify(arr1);
+        const s2 = JSON.stringify(arr2);
+        if (s1 === s2) return { changed: false };
+
+        return {
+            changed: true,
+            lengthDiff: arr1.length !== arr2.length,
+            diffCount: Math.abs(arr1.length - arr2.length)
+        };
+    }
+
+    /**
+     * Pull latest changes from GitHub (Monorepo)
+     */
+    async pullFromGitHub() {
+        console.log(`📡 Pulling latest changes from GitHub monorepo...`);
+        try {
+            execSync('git pull origin main', { cwd: this.root, stdio: 'inherit' });
+            return { success: true, message: "Monorepo succesvol bijgewerkt vanaf GitHub." };
+        } catch (err) {
+            console.error("❌ Git Pull failed:", err);
+            throw new Error(`Git Pull mislukt: ${err.message}`);
+        }
+    }
+
+    /**
      * Sync local JSON data to Google Sheet
      */
     async syncToSheet(id) {

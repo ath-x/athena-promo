@@ -31,14 +31,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      # - name: Fetch latest data from Google Sheets (Optional)
-      #   run: |
-      #     if [ -f "project-settings/url-sheet.json" ]; then
-      #       echo "✅ Google Sheet config gevonden. Synchroniseren..."
-      #       pnpm fetch-data || echo "⚠️ Sync mislukt, we gaan door met lokale data."
-      #     else
-      #       echo "ℹ️ Geen Google Sheet gekoppeld. We gebruiken de data in de repository."
-      #     fi
+      - name: Fetch latest data from Google Sheets (Optional)
+        run: |
+          if [ -f "project-settings/url-sheet.json" ]; then
+            echo "✅ Google Sheet config gevonden. Synchroniseren (Object-Preserving Merge)..."
+            pnpm fetch-data || echo "⚠️ Sync mislukt, we gaan door met lokale data."
+          else
+            echo "ℹ️ Geen Google Sheet gekoppeld. We gebruiken de data in de repository."
+          fi
 
       - name: Build project
         run: pnpm build

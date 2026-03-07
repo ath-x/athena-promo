@@ -5,6 +5,8 @@ import VisualEditor from './VisualEditor';
 import PullModal from './PullModal';
 import SyncModal from './SyncModal';
 import HelpModal from './HelpModal';
+import SaveEverythingModal from './SaveEverythingModal';
+import SourceConflictModal from './SourceConflictModal';
 
 const DockFrame = () => {
   const [selectedSite, setSelectedSite] = useState('');
@@ -15,6 +17,9 @@ const DockFrame = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showPullModal, setShowPullModal] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showSaveEverythingModal, setShowSaveEverythingModal] = useState(false);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictReport, setConflictReport] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const iframeRef = useRef(null);
@@ -24,6 +29,31 @@ const DockFrame = () => {
   const [rightWidth, setRightWidth] = useState(260);
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
+
+  useEffect(() => {
+    if (selectedSite) {
+      checkForConflicts();
+    }
+  }, [selectedSite]);
+
+  const checkForConflicts = async () => {
+    try {
+      const siteId = typeof selectedSite === 'string' ? selectedSite : (selectedSite.id || selectedSite.name);
+      if (!siteId) return;
+
+      const dashboardPort = import.meta.env.VITE_DASHBOARD_PORT || '5001';
+      const hostname = window.location.hostname;
+      const res = await fetch(`http://${hostname}:${dashboardPort}/api/sites/${siteId}/compare-sources`);
+      const data = await res.json();
+
+      if (data.hasDrift) {
+        setConflictReport(data);
+        setShowConflictModal(true);
+      }
+    } catch (err) {
+      console.error("Conflict check failed:", err);
+    }
+  };
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -704,37 +734,70 @@ const DockFrame = () => {
   };
 
   const handlePush = async () => {
-    if (!selectedSite) return;
-    const url = getSiteApiUrl();
-    if (!url) return;
+    setShowSaveEverythingModal(true);
+  };
 
-    const commitMsg = prompt("Voer een commit bericht in voor je wijzigingen:", "Update via Athena Dock");
-    if (commitMsg === null) return; // Gebruiker annuleerde
-
+  const handlePullFromGitHub = async () => {
+    if (!confirm("Wil je de laatste versie van GitHub ophalen?\n\nJe lokale wijzigingen worden overschreven door de versie in de cloud (Source of Truth).")) return;
+    
     setIsConnected(false);
     try {
-      console.log(`📤 Pushing updates for ${selectedSite.id} via ${url}`);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'deploy-to-github',
-          commitMsg: commitMsg || "Update via Athena Dock"
-        })
+      const dashboardPort = import.meta.env.VITE_DASHBOARD_PORT || '5001';
+      const hostname = window.location.hostname;
+      const res = await fetch(`http://${hostname}:${dashboardPort}/api/system/pull`, {
+        method: 'POST'
       });
-
-      const result = await response.json();
-      if (result.success) {
-        alert(`✅ Wijzigingen gepusht naar GitHub!`);
-        // Geen reload nodig bij een simpele push
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Succesvol bijgewerkt vanaf GitHub!");
+        window.location.reload();
       } else {
-        alert(`❌ Push mislukt: ${result.error}`);
+        alert("❌ Pull mislukt: " + data.error);
       }
     } catch (err) {
-      console.error('❌ Network error during push:', err);
-      alert('❌ Fout bij verbinden met de site server.');
+      console.error(err);
+      alert("❌ Netwerkfout bij ophalen van GitHub.");
     } finally {
       setIsConnected(true);
+    }
+  };
+
+  const executeSaveStep = async (stepId) => {
+    const siteId = typeof selectedSite === 'string' ? selectedSite : (selectedSite.id || selectedSite.name);
+    const dashboardPort = import.meta.env.VITE_DASHBOARD_PORT || '5001';
+    const hostname = window.location.hostname;
+    const siteUrl = getSiteApiUrl();
+
+    switch (stepId) {
+      case 'disk':
+        // De Dock schrijft velden al direct naar disk via saveData()
+        // We doen hier even een dummy delay of een "ping" naar de server
+        console.log("💾 Step: Disk Save (already handled by live updates)");
+        await new Promise(r => setTimeout(r, 500));
+        break;
+      
+      case 'sheet':
+        console.log("📊 Step: Pre-sync check (Pulling Sheets data first to prevent data loss)...");
+        // 2.2: Altijd eerst pullen naar een tijdelijk bestand/backup via de bestaande pull route
+        // De DataManager in de backend doet de backup automatisch.
+        await fetch(`http://${hostname}:${dashboardPort}/api/sites/${siteId}/pull-from-sheet`, { method: 'POST' });
+        
+        console.log("📊 Step: Sync to Google Sheets...");
+        const sheetRes = await fetch(`http://${hostname}:${dashboardPort}/api/sites/${siteId}/sync-to-sheet`, { method: 'POST' });
+        const sheetData = await sheetRes.json();
+        if (!sheetData.success) throw new Error(sheetData.error || "Sheet sync failed");
+        break;
+
+      case 'github':
+        console.log("🚀 Step: Push to GitHub...");
+        const pushRes = await fetch(siteUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'deploy-to-github', commitMsg: "Update via Athena Multi-Save" })
+        });
+        const pushData = await pushRes.json();
+        if (!pushData.success) throw new Error(pushData.error || "GitHub push failed");
+        break;
     }
   };
 
@@ -758,8 +821,8 @@ const DockFrame = () => {
             <button
               onClick={undo}
               disabled={historyIndex < 0}
-              className={`px-3 py-1 rounded text-xs flex items-center gap-1 transition-all ${historyIndex < 0 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-700'}`}
-              title="Maak de laatste actie ongedaan. Gebruik dit als je per ongeluk iets hebt gewijzigd of verwijderd (Sneltoets: Ctrl+Z)."
+              className={`px-3 py-1.5 rounded text-xs flex items-center gap-1 transition-all ${historyIndex < 0 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-700'}`}
+              title="Undo (Ctrl+Z)"
             >
               <i className="fa-solid fa-rotate-left"></i>
             </button>
@@ -767,8 +830,8 @@ const DockFrame = () => {
             <button
               onClick={redo}
               disabled={historyIndex >= history.length - 1}
-              className={`px-3 py-1 rounded text-xs flex items-center gap-1 transition-all ${historyIndex >= history.length - 1 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-700'}`}
-              title="Voer de actie die je zojuist ongedaan hebt gemaakt opnieuw uit (Sneltoets: Ctrl+Y)."
+              className={`px-3 py-1.5 rounded text-xs flex items-center gap-1 transition-all ${historyIndex >= history.length - 1 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-700'}`}
+              title="Redo (Ctrl+Y)"
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
@@ -809,27 +872,34 @@ const DockFrame = () => {
               {selectedSite.repoUrl ? (
                 <>
                   <button
+                    onClick={handlePullFromGitHub}
+                    className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-[10px] text-white rounded font-bold flex items-center gap-1 transition-all"
+                    title="Haal de nieuwste wijzigingen op van de GitHub-cloud (Source of Truth)."
+                  >
+                    <i className="fa-solid fa-cloud-arrow-down"></i> Sync from GitHub
+                  </button>
+                  <button
                     onClick={handlePush}
                     className="px-3 py-1 bg-violet-600 hover:bg-violet-500 text-[10px] text-white rounded font-bold flex items-center gap-1 transition-all"
-                    title="Verstuur je wijzigingen naar GitHub om de live website bij te werken. De website wordt daarna automatisch opnieuw opgebouwd."
+                    title="Open de Multi-Save (Save 3) om alles in één keer te bewaren en te publiceren."
                   >
-                    <i className="fa-solid fa-code-commit"></i> Push to GitHub
+                    <i className="fa-solid fa-cloud-arrow-up"></i> SAVE & PUBLISH
                   </button>
                   <a
                     href={selectedSite.repoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-[10px] text-white rounded font-bold flex items-center gap-1 transition-all"
-                    title="Bekijk de technische broncode van dit project op GitHub."
+                    title="Bekijk de technische broncode op GitHub."
                   >
-                    <i className="fa-brands fa-github"></i> GitHub
+                    <i className="fa-brands fa-github"></i>
                   </a>
                 </>
               ) : (
                 <button
                   onClick={handleDeploy}
                   className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-[10px] text-white rounded font-bold flex items-center gap-1 transition-all"
-                  title="Maak een nieuwe plek op internet (GitHub repository) aan voor deze website en publiceer hem voor de eerste keer."
+                  title="Deploy naar GitHub voor de eerste keer."
                 >
                   <i className="fa-solid fa-cloud-arrow-up"></i> Deploy to GitHub
                 </button>
@@ -911,9 +981,33 @@ const DockFrame = () => {
             />
           )}
 
+          {showSaveEverythingModal && (
+            <SaveEverythingModal 
+                isOpen={showSaveEverythingModal}
+                onClose={() => setShowSaveEverythingModal(false)}
+                onConfirm={executeSaveStep}
+                siteName={selectedSite?.name || selectedSite}
+            />
+          )}
+
+          {showConflictModal && (
+            <SourceConflictModal 
+                isOpen={showConflictModal}
+                report={conflictReport}
+                onClose={() => setShowConflictModal(false)}
+                onResolveGitHub={async () => {
+                  setShowConflictModal(false);
+                  await handlePullFromGitHub();
+                }}
+            />
+          )}
+
           {showSyncModal && (
             <SyncModal
-              onConfirm={handleSyncConfirm}
+              onConfirm={() => {
+                setShowSyncModal(false);
+                executeSaveStep('sheet');
+              }}
               onCancel={() => setShowSyncModal(false)}
             />
           )}

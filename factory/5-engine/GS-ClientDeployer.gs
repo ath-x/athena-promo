@@ -34,14 +34,13 @@ function triggerDeploy() {
   });
 
   // Jouw Master Proxy URL
-  // Jouw Master Proxy URL
   const proxyUrl = "https://script.google.com/macros/s/AKfycbwwpJIY030kC8F1a8W-z9yZrIpXosL2B39PschIDcj39uuD-21TddhmCA-zP0gLPiBo/exec";
 
+  // Payload opbouwen op basis van ALLE velden in de _System sheet
   const payload = {
     action: "deploy",
-    user: config.github_user,
-    repo: config.github_repo_name,
-    secret_key: "KIES_HIER_EEN_EIGEN_WACHTWOORD" 
+    secret_key: "KIES_HIER_EEN_EIGEN_WACHTWOORD",
+    ...config // Voegt alle velden toe (user, repo, site, etc.)
   };
 
   const options = {
@@ -87,11 +86,10 @@ function processUpload(filename, base64Data) {
 
   const payload = {
     action: "upload",
-    user: config.github_user,
-    repo: config.github_repo_name,
     secret_key: "KIES_HIER_EEN_EIGEN_WACHTWOORD",
     filename: filename,
-    content: base64Data
+    content: base64Data,
+    ...config // Voegt alle velden toe (user, repo, site, etc.)
   };
 
   const options = {
