@@ -1,5 +1,5 @@
 /**
- * Athena CMS - Unified Client Script v3.5
+ * Athena CMS - Unified Client Script v3.6
  * Bevat: Website Deployer & Media Manager
  *
  * INSTALLATIE:
@@ -20,10 +20,10 @@ function onOpen() {
 // 2. FUNCTIE: Website Live Zetten (Deploy)
 function triggerDeploy() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const systemSheet = ss.getSheetByName('_System');
+  const systemSheet = ss.getSheetByName('_system') || ss.getSheetByName('_System');
   
   if (!systemSheet) {
-    SpreadsheetApp.getUi().alert('❌ Fout: Het tabblad _System werd niet gevonden.');
+    SpreadsheetApp.getUi().alert('❌ Fout: Het tabblad _system werd niet gevonden.');
     return;
   }
 
@@ -76,7 +76,7 @@ function openImageUploader() {
 // 4. FUNCTIE: Het daadwerkelijke uploaden (wordt aangeroepen vanuit de UI)
 function processUpload(filename, base64Data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const systemSheet = ss.getSheetByName('_System');
+  const systemSheet = ss.getSheetByName('_system') || ss.getSheetByName('_System');
   const data = systemSheet.getDataRange().getValues();
   let config = {};
   data.forEach(row => { if (row[0]) config[row[0]] = row[1]; });
