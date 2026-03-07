@@ -7,6 +7,10 @@
     "editUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/edit#gid=0",
     "exportUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/export?format=tsv&gid=0"
   },
+  "hero": {
+    "editUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/edit#gid=PLACEHOLDER_GID",
+    "exportUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/export?format=tsv&gid=PLACEHOLDER_GID"
+  },
   "contact": {
     "editUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/edit#gid=745819336",
     "exportUrl": "https://docs.google.com/spreadsheets/d/1HrOUhMWGmY2A_eqsyMmBid1ChWNxtVA9TBwFPVNLxPk/export?format=tsv&gid=745819336"
