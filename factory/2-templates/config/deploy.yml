@@ -2,9 +2,9 @@ name: Deploy Athena Site
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feat/**', 'fix/**' ]
   repository_dispatch:
-    types: [ publish_button ] # Dit luistert naar de Google Sheet knop
+    types: [ publish_button ]
 
 permissions:
   contents: write
@@ -32,10 +32,29 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build project
-        run: pnpm build
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            pnpm build
+          else
+            # Build for preview subfolder
+            REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+            export VITE_BASE_URL="/$REPO_NAME/preview/"
+            pnpm build --base="/$REPO_NAME/preview/"
+          fi
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Main)
+        if: github.ref_name == 'main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          keep_files: true # Cruciaal om de preview map niet te verwijderen
+
+      - name: Deploy to GitHub Pages (Preview Slot)
+        if: github.ref_name != 'main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: preview
+          keep_files: true

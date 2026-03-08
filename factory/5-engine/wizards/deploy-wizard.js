@@ -52,7 +52,8 @@ export async function deployProject(selectedProject, commitMsg = "Deploy update"
 
         // 2. Monorepo Commit & Push
         try {
-            console.log(`   📦 Wijzigingen toevoegen aan monorepo...`);
+            const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: monorepoRoot, encoding: 'utf8' }).trim();
+            console.log(`   📦 Wijzigingen toevoegen aan monorepo (Branch: ${currentBranch})...`);
             execSync('git add .', { cwd: monorepoRoot, stdio: 'pipe' });
             
             const status = execSync('git status --porcelain', { cwd: monorepoRoot, encoding: 'utf8' });
@@ -61,9 +62,8 @@ export async function deployProject(selectedProject, commitMsg = "Deploy update"
                 console.log(`   📝 Committen naar monorepo: "${commitMsg}"...`);
                 execSync(`git commit -m "${commitMsg}"`, { cwd: monorepoRoot, stdio: 'pipe' });
                 
-                console.log(`   📤 Pushen naar monorepo (origin main)...`);
-                // We gebruiken de SSH alias van de monorepo indien ingesteld, anders standaard origin
-                execSync(`git push origin main`, { cwd: monorepoRoot, stdio: 'pipe' });
+                console.log(`   📤 Pushen naar monorepo (origin ${currentBranch})...`);
+                execSync(`git push origin ${currentBranch}`, { cwd: monorepoRoot, stdio: 'pipe' });
                 console.log(`   ✅ Monorepo push voltooid.`);
             } else {
                 console.log(`   ℹ️ Geen wijzigingen gevonden in de monorepo.`);
@@ -142,11 +142,12 @@ export async function deployProject(selectedProject, commitMsg = "Deploy update"
         try { execSync(`git remote add origin "${authRemoteUrl}"`, { cwd: projectDir, stdio: 'pipe' }); }
         catch (e) { execSync(`git remote set-url origin "${authRemoteUrl}"`, { cwd: projectDir, stdio: 'pipe' }); }
 
-        execSync(`git push -u origin main`, { cwd: projectDir, stdio: 'pipe' });
+        const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: projectDir, encoding: 'utf8' }).trim();
+        execSync(`git push -u origin ${currentBranch}`, { cwd: projectDir, stdio: 'pipe' });
         
         // GH Pages config
         const apiParams = `-F "source[branch]=gh-pages" -F "source[path]=/"`;
-        try { execSync(`git push origin main:gh-pages`, { cwd: projectDir, stdio: 'ignore' }); } catch(e){}
+        try { execSync(`git push origin ${currentBranch}:gh-pages`, { cwd: projectDir, stdio: 'ignore' }); } catch(e){}
         try { execSync(`gh api repos/${ORG}/${repoName}/pages -X POST ${apiParams}`, { cwd: projectDir, stdio: 'ignore', env: { ...process.env, GH_TOKEN: GITHUB_PAT } }); }
         catch (apiErr) { execSync(`gh api repos/${ORG}/${repoName}/pages -X PUT ${apiParams}`, { cwd: projectDir, stdio: 'ignore', env: { ...process.env, GH_TOKEN: GITHUB_PAT } }); }
         

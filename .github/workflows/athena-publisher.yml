@@ -18,6 +18,8 @@ on:
       - 'sites/**'
     branches:
       - main
+      - 'feat/**'
+      - 'fix/**'
 
 jobs:
   # STAP 1: Detecteer welke sites gewijzigd zijn
@@ -47,7 +49,8 @@ jobs:
           git config --global user.email "bot@athena-cms.nl"
           git add src/data/*.json
           if git commit -m "chore(data): sync $SITE from sheets [skip ci]"; then
-            git push origin main
+            # Push naar de branch waar de dispatch vandaan kwam (meestal main)
+            git push origin ${{ github.ref_name }}
           fi
 
       - name: 🔍 Detect Changed Sites
@@ -68,6 +71,7 @@ jobs:
             if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
               BEFORE="HEAD~1"
             fi
+            # We vergelijken met de basis van de huidige push
             RAW_SITES=$(git diff --name-only "$BEFORE" ${{ github.event.after }} | grep '^sites/' | cut -d/ -f2 | sort -u | tr -d '\r' | xargs)
             CHANGED_SITES=$(echo "$RAW_SITES" | jq -R -s -c 'split(" ") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
           fi
@@ -88,61 +92,18 @@ jobs:
     strategy:
       matrix:
         site: ${{ fromJson(needs.discovery.outputs.sites) }}
-      fail-fast: false # Laat andere sites doorgaan als één faalt
+      fail-fast: false
     
     steps:
       - name: 🛰️ Checkout Monorepo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Volledige history nodig voor subtree split
+          fetch-depth: 0
           token: ${{ secrets.ATHENA_DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: 🛠️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: 📦 Setup pnpm & Cache
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.4
-          run_install: false
-
-      - name: 💾 Get pnpm store directory
-        shell: bash
+      - name: 🏗️ Setup Enviroment
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: ⚡ Cache pnpm modules
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 🏗️ Build Site
-        run: |
-          cd "sites/${{ matrix.site }}"
-          pnpm install --no-frozen-lockfile
-          pnpm build
-
-      - name: 🚦 Optional Lighthouse Audit
-        # Draai alleen als aangevinkt bij manual run OF als "[audit]" in commit bericht staat
-        if: ${{ github.event.inputs.run_audit == 'true' || contains(github.event.head_commit.message, '[audit]') }}
-        run: |
-          npm install -g @lhci/cli@0.13.x
-          cd "sites/${{ matrix.site }}"
-          cat <<EOF > lighthouserc.json
-          {
-            "ci": {
-              "collect": { "staticDistDir": "./dist" },
-              "assert": { "preset": "lighthouse:recommended" }
-            }
-          }
-          EOF
-          lhci collect --static-dist-dir=./dist || echo "⚠️ Audit failed"
-          lhci assert || echo "⚠️ Metrics low"
+          echo "CURRENT_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: 🚀 Push Subtree to Client Repo
         env:
@@ -151,7 +112,7 @@ jobs:
           DEFAULT_OWNER: "athena-cms-factory"
         run: |
           SITE="${{ matrix.site }}"
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          BRANCH="${{ github.ref_name }}"
           
           # Probeer de specifieke repoUrl uit de site settings te halen
           DEPLOY_CONFIG="sites/$SITE/project-settings/deployment.json"
@@ -169,13 +130,9 @@ jobs:
             TARGET_REPO="$DEFAULT_OWNER/$SITE"
           fi
 
-          # Controleer/Maak repo aan
-          if ! gh repo view $TARGET_REPO >/dev/null 2>&1; then
-            gh repo create "$TARGET_REPO" --public --description "Athena CMS Site: $SITE" || true
-          fi
-
           REMOTE_URL="https://x-access-token:${API_TOKEN_GITHUB}@github.com/${TARGET_REPO}.git"
           
-          # Isoleer en push
-          SPLIT_SHA=$(git subtree split --prefix=sites/$SITE $CURRENT_BRANCH)
-          git push "$REMOTE_URL" "$SPLIT_SHA":refs/heads/main --force
+          # Isoleer en push naar DEZELFDE branch op de target repo
+          # (behalve voor main, dat blijft de standaard)
+          SPLIT_SHA=$(git subtree split --prefix=sites/$SITE $BRANCH)
+          git push "$REMOTE_URL" "$SPLIT_SHA":refs/heads/$BRANCH --force
