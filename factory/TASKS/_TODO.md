@@ -1,6 +1,10 @@
 # 📋 TODO - Athena CMS (Master Plan)
 
-## 🎯 Upcoming Sprint (Next Week): Validation & Launch
+## 🐛 Critical Bugfix & Polish (Urgent)
+- [ ] **Dock Design Sync**: Zorg dat `DesignControls` (zijbalk) bij het opstarten ook de kleuren uit `style_config.json` inlaadt (nu staan ze op zwart na reload).
+- [ ] **Modal Context Awareness**: Verbeter de `SITE_SYNC_RESPONSE` zodat de modal het verschil herkent tussen "geen kleur" (volg globaal) en "zwart".
+- [ ] **Button Navigation Fix (De Schaar)**: Onderzoek waarom CTA en Navbar knoppen (behalve Home/Contact) niet scrollen naar de juiste sectie.
+- [ ] **One-Step-Behind Prevention**: Finale controle op alle sliders om de 1-frame-delay volledig te elimineren in alle browsers.
 - [ ] **System-Wide Quality Audit**: Perform architectural scan and identify technical debt.
 - [ ] **Onboarding Validation**: Execute first live "Digital Strategist" onboarding session via CLI/Dashboard.
 - [ ] **Operation War Game**: Execute first end-to-end autonomous agent test via Gmail.

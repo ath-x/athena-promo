@@ -29,7 +29,9 @@ export default function DesignControls({ onColorChange, siteStructure }) {
       ? siteStructure.data.site_settings[0] 
       : (siteStructure?.data?.site_settings || {});
 
-    const settings = { ...siteSettings, ...headerSettings };
+    const styleConfig = siteStructure?.data?.style_config || {};
+
+    const settings = { ...siteSettings, ...headerSettings, ...styleConfig };
 
     if (Object.keys(settings).length > 0) {
       console.log("🎨 Loading site settings into Design Editor:", settings);

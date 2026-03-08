@@ -14,19 +14,28 @@ const VisualEditor = ({ item, selectedSite, onSave, onCancel, onUpload }) => {
   const [value, setValue] = useState('');
   const [linkData, setLinkData] = useState({ label: '', url: '' });
   const [textStyles, setTextStyles] = useState({
-    color: '',
-    fontSize: '',
-    fontWeight: 'normal',
-    fontStyle: 'normal',
-    textAlign: 'left',
-    fontFamily: '',
-    shadowX: 0,
-    shadowY: 0,
-    shadowBlur: 0,
-    shadowColor: 'rgba(0,0,0,0.5)',
-    paddingTop: 0,
-    paddingBottom: 0
+    color: typeof initialValueData === 'object' ? (initialValueData.color || '') : '',
+    fontSize: typeof initialValueData === 'object' ? (initialValueData.fontSize || '') : '',
+    fontWeight: typeof initialValueData === 'object' ? (initialValueData.fontWeight || 'normal') : 'normal',
+    fontStyle: typeof initialValueData === 'object' ? (initialValueData.fontStyle || 'normal') : 'normal',
+    textAlign: typeof initialValueData === 'object' ? (initialValueData.textAlign || 'left') : 'left',
+    fontFamily: typeof initialValueData === 'object' ? (initialValueData.fontFamily || '') : '',
+    shadowX: typeof initialValueData === 'object' ? (initialValueData.shadowX || 0) : 0,
+    shadowY: typeof initialValueData === 'object' ? (initialValueData.shadowY || 0) : 0,
+    shadowBlur: typeof initialValueData === 'object' ? (initialValueData.shadowBlur || 0) : 0,
+    shadowColor: typeof initialValueData === 'object' ? (initialValueData.shadowColor || 'rgba(0,0,0,0.5)') : 'rgba(0,0,0,0.5)',
+    paddingTop: typeof initialValueData === 'object' ? (initialValueData.paddingTop || 0) : 0,
+    paddingBottom: typeof initialValueData === 'object' ? (initialValueData.paddingBottom || 0) : 0
   });
+
+  // Initiale waarde zetten op basis van props (voor snelle start)
+  useEffect(() => {
+    if (typeof initialValueData === 'object') {
+        setValue(initialValueData.text || initialValueData.label || initialValueData.title || '');
+    } else {
+        setValue(initialValueData);
+    }
+  }, [initialValueData]);
 
   // [v33 Debug Bridge]: Luister naar antwoorden van de site
   useEffect(() => {
