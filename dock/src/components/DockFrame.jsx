@@ -245,17 +245,25 @@ const DockFrame = () => {
   // Send color update to site
   const updateColor = (key, value, shouldSave = true) => {
     if (iframeRef.current) {
-      // 1. Determine which file this property belongs to
+      // 1. Determine target file
       let file = 'site_settings';
       if (key.startsWith('header_') || key === 'content_top_offset' || key.startsWith('toon_') || key === 'header_hoogte' || key === 'header_transparantie') {
         file = 'header_settings';
-      } else if (key.startsWith('hero_') || key === 'title' || key === 'titel') {
+      } else if (key.startsWith('hero_') || key === 'title' || key === 'titel' || key === 'hero_overlay_transparantie') {
         file = 'hero';
       } else if (key.includes('global_')) {
         file = 'style_config';
+      } else {
+        // Auto-detect if possible
+        const possibleFiles = ['style_config', 'site_settings', 'header_settings'];
+        for (const f of possibleFiles) {
+          const table = siteStructure?.data?.[f];
+          const row = Array.isArray(table) ? table[0] : table;
+          if (row && key in row) { file = f; break; }
+        }
       }
 
-      // 2. Live preview via postMessage (Crucial: send 'file' so App.jsx knows where to update)
+      // 2. Live preview via postMessage (Crucial: send 'file'!)
       iframeRef.current.contentWindow.postMessage({
         type: 'DOCK_UPDATE_COLOR',
         file,
@@ -265,13 +273,14 @@ const DockFrame = () => {
       }, '*');
 
       if (shouldSave) {
-        // Speciale check voor objecten (zoals de titel)
-        const currentData = siteStructure?.data?.[file];
-        const row = Array.isArray(currentData) ? currentData[0] : currentData;
-        const existingValue = row ? row[key] : null;
+        const currentTable = siteStructure?.data?.[file];
+        const row = Array.isArray(currentTable) ? currentTable[0] : currentTable;
+        const oldValue = row ? row[key] : null;
 
-        if (typeof existingValue === 'object' && existingValue !== null) {
-          const newValue = { ...existingValue, color: value };
+        pushToHistory(file, 0, key, oldValue, value);
+
+        if (typeof oldValue === 'object' && oldValue !== null) {
+          const newValue = { ...oldValue, color: value };
           saveData(file, 0, key, newValue, null, true);
         } else {
           saveData(file, 0, key, value, null, true);

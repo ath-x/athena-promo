@@ -76,32 +76,32 @@ export default function EditableText({
     const textShadow = hasShadow ? `${shadowX} ${shadowY} ${shadowBlur} ${shadowColor}` : undefined;
 
     const styles = {
-      color: actualValue.color,
+      color: actualValue.color || undefined, // Transparency fix: Use undefined if empty
       fontSize: actualValue.fontSize ? (typeof actualValue.fontSize === 'number' ? `${actualValue.fontSize}px` : actualValue.fontSize) : undefined,
-      fontWeight: actualValue.fontWeight,
-      fontStyle: actualValue.fontStyle,
-      fontFamily: actualValue.fontFamily, // v8.4: Font Family Support
-      textAlign: actualValue.textAlign,
-      lineHeight: actualValue.lineHeight,
-      letterSpacing: actualValue.letterSpacing,
-      textTransform: actualValue.textTransform,
-      textDecoration: actualValue.textDecoration,
-      textShadow: textShadow, // v8.4: Advanced Shadow Support
-      backgroundColor: actualValue.backgroundColor,
+      fontWeight: actualValue.fontWeight || undefined,
+      fontStyle: actualValue.fontStyle || undefined,
+      fontFamily: actualValue.fontFamily || undefined,
+      textAlign: actualValue.textAlign || undefined,
+      lineHeight: actualValue.lineHeight || undefined,
+      letterSpacing: actualValue.letterSpacing || undefined,
+      textTransform: actualValue.textTransform || undefined,
+      textDecoration: actualValue.textDecoration || undefined,
+      textShadow: textShadow || undefined,
+      backgroundColor: actualValue.backgroundColor || undefined,
       borderRadius: actualValue.borderRadius ? (typeof actualValue.borderRadius === 'number' ? `${actualValue.borderRadius}px` : actualValue.borderRadius) : undefined,
-      padding: actualValue.padding,
+      padding: actualValue.padding || undefined,
       paddingTop: actualValue.paddingTop !== undefined ? (typeof actualValue.paddingTop === 'number' ? `${actualValue.paddingTop}px` : actualValue.paddingTop) : undefined,
       paddingBottom: actualValue.paddingBottom !== undefined ? (typeof actualValue.paddingBottom === 'number' ? `${actualValue.paddingBottom}px` : actualValue.paddingBottom) : undefined,
       marginTop: actualValue.marginTop !== undefined ? (typeof actualValue.marginTop === 'number' ? `${actualValue.marginTop}px` : actualValue.marginTop) : undefined,
       marginBottom: actualValue.marginBottom !== undefined ? (typeof actualValue.marginBottom === 'number' ? `${actualValue.marginBottom}px` : actualValue.marginBottom) : undefined,
-      opacity: actualValue.opacity,
-      margin: actualValue.margin,
-      display: actualValue.display,
+      opacity: actualValue.opacity || undefined,
+      margin: actualValue.margin || undefined,
+      display: actualValue.display || undefined,
       ...style
     };
 
     // Clean undefined keys
-    return Object.fromEntries(Object.entries(styles).filter(([_, v]) => v !== undefined));
+    return Object.fromEntries(Object.entries(styles).filter(([_, v]) => v !== undefined && v !== ''));
   }, [actualValue, isObject, style]);
 
   if (!isDev) {

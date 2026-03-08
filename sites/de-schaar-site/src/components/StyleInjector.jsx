@@ -5,10 +5,15 @@ import React, { useLayoutEffect } from 'react';
  * Synchronizes Athena JSON settings with CSS Custom Properties (Variables).
  * This ensures the site looks correct both in standalone mode and in the Dock.
  */
-const StyleInjector = ({ hero = {}, headerSettings = {} }) => {
-  const hData = Array.isArray(hero) ? (hero[0] || {}) : hero;
-  const sData = Array.isArray(headerSettings) ? (headerSettings[0] || {}) : headerSettings;
-  const settings = { ...hData, ...sData };
+const StyleInjector = ({ data = {} }) => {
+  // Merge multiple sources of design data
+  const sData = Array.isArray(data.site_settings) ? (data.site_settings[0] || {}) : (data.site_settings || {});
+  const hData = Array.isArray(data.header_settings) ? (data.header_settings[0] || {}) : (data.header_settings || {});
+  const heroData = Array.isArray(data.hero) ? (data.hero[0] || {}) : (data.hero || {});
+  const styleConfig = data.style_config || {};
+
+  // Prioritize: style_config > header_settings > hero > site_settings
+  const settings = { ...sData, ...heroData, ...hData, ...styleConfig };
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -41,9 +46,27 @@ const StyleInjector = ({ hero = {}, headerSettings = {} }) => {
     };
 
     Object.entries(mappings).forEach(([key, vars]) => {
-      const val = settings[`${prefix}${key}`];
+      const settingsKey = `${prefix}${key}`;
+      const val = settings[settingsKey];
+      
       if (val) {
-        vars.forEach(v => root.style.setProperty(v, val));
+        vars.forEach(v => {
+          root.style.setProperty(v, val);
+          
+          // RGB variant handling
+          const rgbKey = `${v}-rgb`;
+          const rgbVal = settings[rgbKey];
+          
+          if (rgbVal) {
+            root.style.setProperty(rgbKey, rgbVal);
+          } else if (typeof val === 'string' && val.startsWith('#')) {
+            const cleanHex = val.replace('#', '');
+            const r = parseInt(cleanHex.substring(0, 2), 16);
+            const g = parseInt(cleanHex.substring(2, 4), 16);
+            const b = parseInt(cleanHex.substring(4, 6), 16);
+            if (!isNaN(r)) root.style.setProperty(rgbKey, `${r} ${g} ${b}`);
+          }
+        });
       }
     });
 

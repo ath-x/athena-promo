@@ -8,7 +8,21 @@
   },
   {
     "id": "missie",
-    "title": "Onze Missie",
+    "title": {
+      "text": "Onze Missie",
+      "color": "#1fc722",
+      "fontSize": "",
+      "fontWeight": "bold",
+      "fontStyle": "italic",
+      "textAlign": "left",
+      "fontFamily": "",
+      "shadowX": 0,
+      "shadowY": 0,
+      "shadowBlur": 0,
+      "shadowColor": "rgba(0,0,0,0.5)",
+      "paddingTop": 0,
+      "paddingBottom": 0
+    },
     "subtitle": "Waar we voor staan",
     "visible": true,
     "padding": 40

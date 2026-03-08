@@ -111,7 +111,7 @@ const App = ({ data: initialData }) => {
   return (
     <DisplayConfigProvider data={data}>
       <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] transition-colors duration-500">
-        <StyleInjector hero={data['hero']} headerSettings={data['header_settings']} />
+        <StyleInjector data={data} />
         
         <Header 
           primaryTable={primaryTable} 

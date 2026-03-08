@@ -137,6 +137,11 @@ const VisualEditor = ({ item, selectedSite, onSave, onCancel, onUpload }) => {
     onSave(finalData, {});
   };
 
+  const handleResetToGlobal = () => {
+    if (!window.confirm("Weet je zeker dat je alle individuele opmaak (kleur, schaduw, font) wilt wissen? De tekst zal weer de standaard site-stijl volgen.")) return;
+    onSave(value, {});
+  };
+
   const getPreviewUrl = (filename) => {
     if (!filename) return '';
     if (filename.startsWith('http')) return filename;
@@ -410,10 +415,21 @@ const VisualEditor = ({ item, selectedSite, onSave, onCancel, onUpload }) => {
           )}
         </div>
 
-        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-4 shrink-0">
-          <button onClick={onCancel} className="px-6 py-3 text-slate-500 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl">Cancel</button>
-          <button onClick={handleSave} className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-xl shadow-blue-500/20 active:scale-95 transition-all">SAVE CHANGES</button>
+        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+          <button 
+            onClick={handleResetToGlobal}
+            className="text-[10px] font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest flex items-center gap-2"
+            title="Wis alle handmatige opmaak en volg weer de globale instellingen."
+          >
+            <i className="fa-solid fa-rotate-left"></i> Reset naar standaard
+          </button>
+
+          <div className="flex gap-4">
+            <button onClick={onCancel} className="px-6 py-3 text-slate-500 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all">Cancel</button>
+            <button onClick={handleSave} className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-xl shadow-blue-500/20 active:scale-95 transition-all">SAVE CHANGES</button>
+          </div>
         </div>
+
       </div>
     </div>
   );
