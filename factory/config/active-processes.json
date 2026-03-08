@@ -6,6 +6,13 @@
     "startTime": "2026-03-08T08:30:24.776Z",
     "logFile": "/home/kareltestspecial/0-IT/2-Productie/athena/athena-x/factory/output/logs/athena-dock-dock.log"
   },
+  "5004": {
+    "pid": 7482,
+    "id": "media-mapper",
+    "type": "editor",
+    "startTime": "2026-03-08T08:32:53.172Z",
+    "logFile": "/home/kareltestspecial/0-IT/2-Productie/athena/athena-x/factory/output/logs/media-mapper-editor.log"
+  },
   "6110": {
     "pid": 4450,
     "id": "de-schaar-site",
