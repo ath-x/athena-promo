@@ -2,9 +2,9 @@ name: Deploy Athena Site
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feat/**', 'fix/**' ]
   repository_dispatch:
-    types: [ publish_button ] # Dit luistert naar de Google Sheet knop
+    types: [ publish_button ]
 
 permissions:
   contents: write
@@ -31,20 +31,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Fetch latest data from Google Sheets (Optional)
+      - name: Build project
         run: |
-          if [ -f "project-settings/url-sheet.json" ]; then
-            echo "✅ Google Sheet config gevonden. Synchroniseren..."
-            pnpm fetch-data || echo "⚠️ Sync mislukt, we gaan door met lokale data."
+          BRANCH_NAME="${{ github.ref_name }}"
+          if [ "$BRANCH_NAME" = "main" ]; then
+            pnpm build
           else
-            echo "ℹ️ Geen Google Sheet gekoppeld. We gebruiken de data in de repository."
+            # MULTIVERSE: Build for branch-specific subfolder
+            REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+            export VITE_BASE_URL="/$REPO_NAME/$BRANCH_NAME/"
+            pnpm build --base="/$REPO_NAME/$BRANCH_NAME/"
           fi
 
-      - name: Build project
-        run: pnpm build
-
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Main)
+        if: github.ref_name == 'main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          keep_files: true
+
+      - name: Deploy to GitHub Pages (Branch Slot)
+        if: github.ref_name != 'main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: ${{ github.ref_name }}
+          keep_files: true
