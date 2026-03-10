@@ -1,29 +1,56 @@
 {
-  "blueprint_name": "tech-consultancy",
+  "blueprint_name": "cloud-architects",
   "track": "docked",
   "data_structure": [
     {
-      "table_name": "basis",
+      "table_name": "header",
       "columns": [
         {
-          "name": "name",
-          "description": "Naam van het bureau"
+          "name": "site_naam",
+          "description": "Naam van de website"
         },
         {
           "name": "tagline",
-          "description": "Slogan"
+          "description": "Slogan onder de naam"
         },
         {
-          "name": "address",
-          "description": "Kantooradres"
+          "name": "logo",
+          "description": "Website logo (SVG/PNG)",
+          "type": "media"
         },
         {
-          "name": "phone",
-          "description": "Telefoon"
+          "name": "knop_tekst",
+          "description": "Tekst op de header knop"
         },
         {
-          "name": "email",
-          "description": "Contact e-mail"
+          "name": "knop_link",
+          "description": "Link voor de header knop"
+        }
+      ]
+    },
+    {
+      "table_name": "hero",
+      "columns": [
+        {
+          "name": "titel",
+          "description": "Grote titel in de hero"
+        },
+        {
+          "name": "subtitel",
+          "description": "Ondertitel in de hero"
+        },
+        {
+          "name": "afbeelding",
+          "description": "Achtergrondafbeelding hero",
+          "type": "media"
+        },
+        {
+          "name": "knop_tekst",
+          "description": "Hoofdknop tekst"
+        },
+        {
+          "name": "knop_link",
+          "description": "Hoofdknop link"
         }
       ]
     },
@@ -31,11 +58,11 @@
       "table_name": "expertise",
       "columns": [
         {
-          "name": "title",
+          "name": "titel",
           "description": "Expertisedomein"
         },
         {
-          "name": "description",
+          "name": "tekst",
           "description": "Uitleg over de expertise"
         },
         {
@@ -48,24 +75,21 @@
       "table_name": "projects",
       "columns": [
         {
-          "name": "client_name",
+          "name": "titel",
           "description": "Naam van de klant"
         },
         {
-          "name": "project_title",
-          "description": "Titel van de case study"
+          "name": "subtitel",
+          "description": "Titel van het project"
         },
         {
-          "name": "summary",
-          "description": "Korte samenvatting van het project"
+          "name": "tekst",
+          "description": "Samenvatting en resultaat"
         },
         {
-          "name": "result",
-          "description": "Resultaat of impact"
-        },
-        {
-          "name": "image_url",
-          "description": "Project afbeelding"
+          "name": "afbeelding",
+          "description": "Project afbeelding",
+          "type": "media"
         }
       ]
     },
@@ -73,16 +97,83 @@
       "table_name": "packages",
       "columns": [
         {
-          "name": "package_name",
+          "name": "titel",
           "description": "Naam van het pakket"
         },
         {
-          "name": "features",
-          "description": "Lijst van features (komma-gescheiden)"
+          "name": "subtitel",
+          "description": "Korte omschrijving"
         },
         {
-          "name": "price",
-          "description": "Prijs per maand of per project"
+          "name": "prijs",
+          "description": "Numerieke prijs"
+        },
+        {
+          "name": "valuta",
+          "description": "Bv. €"
+        },
+        {
+          "name": "periode",
+          "description": "Bv. /mnd"
+        },
+        {
+          "name": "vinkjes",
+          "description": "Features gescheiden door puntkomma"
+        },
+        {
+          "name": "popular",
+          "description": "Highlighten? (true/false)"
+        },
+        {
+          "name": "icon",
+          "description": "Icoon naam"
+        }
+      ]
+    },
+    {
+      "table_name": "contact",
+      "columns": [
+        {
+          "name": "titel",
+          "description": "Titel van de contact sectie"
+        },
+        {
+          "name": "tekst",
+          "description": "Inleidende tekst"
+        },
+        {
+          "name": "afbeelding",
+          "description": "Afbeelding naast de tekst",
+          "type": "media"
+        }
+      ]
+    },
+    {
+      "table_name": "footer",
+      "columns": [
+        {
+          "name": "bedrijfsnaam",
+          "description": "Naam van het bedrijf"
+        },
+        {
+          "name": "tagline",
+          "description": "Tagline in de footer"
+        },
+        {
+          "name": "email",
+          "description": "Contact e-mail"
+        },
+        {
+          "name": "adres",
+          "description": "Kantooradres"
+        },
+        {
+          "name": "btw",
+          "description": "BTW nummer"
+        },
+        {
+          "name": "linkedin",
+          "description": "Link naar LinkedIn profiel"
         }
       ]
     }
@@ -95,13 +186,16 @@
       "background": "#ffffff",
       "surface": "#f8fafc"
     },
-    "radius": "0.5rem",
+    "radius": "2.5rem",
     "font_sans": "'Inter', sans-serif",
     "font_serif": "'Roboto Mono', monospace"
   },
   "sections": [
     {
-      "id": "basis"
+      "id": "header"
+    },
+    {
+      "id": "hero"
     },
     {
       "id": "expertise"
@@ -111,9 +205,15 @@
     },
     {
       "id": "packages"
+    },
+    {
+      "id": "contact"
+    },
+    {
+      "id": "footer"
     }
   ],
   "recommended_layout": "standard",
   "recommended_style": "corporate",
-  "version": "2.0"
+  "version": "3.0"
 }
